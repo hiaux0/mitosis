@@ -1,6 +1,7 @@
 import {
   componentToAlpine,
   componentToAngular,
+  componentToAurelia,
   componentToCustomElement,
   componentToHtml,
   componentToMarko,
@@ -261,6 +262,8 @@ const getGeneratorForTarget = ({ target }: { target: Target }): TargetContext['g
       return componentToVue3;
     case 'angular':
       return componentToAngular;
+    case 'aurelia':
+      return componentToAurelia;
     case 'react':
       return componentToReact;
     case 'swift':

@@ -1,4 +1,5 @@
 import { componentToAngular as angular } from './generators/angular';
+import { componentToAurelia as aurelia } from './generators/aurelia';
 import { componentToBuilder } from './generators/builder';
 import {
   componentToCustomElement as customElement,
@@ -27,6 +28,7 @@ export const builder = componentToBuilder;
 export const targets = {
   alpine,
   angular,
+  aurelia,
   customElement,
   html,
   mitosis,

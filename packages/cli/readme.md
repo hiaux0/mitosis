@@ -44,6 +44,7 @@ Supported formats for `--to` are:
 - `svelte`
 - `liquid`
 - `angular`
+- `aurelia`
 
 Supported formats for `--from` are:
 

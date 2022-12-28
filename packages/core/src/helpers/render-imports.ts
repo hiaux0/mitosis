@@ -38,6 +38,7 @@ const getFileExtensionForTarget = (target: Target): string => {
     case 'lit':
       return '.js';
     case 'angular':
+    case 'aurelia':
       return '';
     // these `.lite` extensions are handled in the `transpile` step of the CLI.
     // TO-DO: consolidate file-extension renaming to this file, and remove `.lite` replaces from the CLI `transpile`. (outdated) ?
@@ -143,7 +144,7 @@ export const renderImport = ({
     } else {
       return `const ${importValue} = () => import('${path}')
       .then(x => x.default)
-      .catch(err => { 
+      .catch(err => {
         console.error('Error while attempting to dynamically import component ${importValue} at ${path}', err);
         throw err;
       });`;

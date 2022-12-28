@@ -1,5 +1,4 @@
 import { componentToAngular as angular } from './generators/angular';
-import { componentToAurelia as aurelia } from './generators/aurelia';
 import { componentToBuilder } from './generators/builder';
 import {
   componentToCustomElement as customElement,
@@ -22,13 +21,16 @@ import { componentToQwik as qwik } from './generators/qwik';
 import { componentToMarko as marko } from './generators/marko';
 import { componentToLit as lit } from './generators/lit';
 import { componentToRsc as rsc } from './generators/rsc';
+import { componentToAurelia1, componentToAurelia2 } from './generators/aurelia/aurelia';
 
 export const builder = componentToBuilder;
 
 export const targets = {
   alpine,
   angular,
-  aurelia,
+  aurelia: componentToAurelia2,
+  aurelia1: componentToAurelia1,
+  aurelia2: componentToAurelia2,
   customElement,
   html,
   mitosis,

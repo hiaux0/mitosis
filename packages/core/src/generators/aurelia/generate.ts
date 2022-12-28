@@ -25,7 +25,7 @@ import { getPropFunctions } from '../../helpers/get-prop-functions';
 import { isString, kebabCase, uniq } from 'lodash';
 import { stripMetaProperties } from '../../helpers/strip-meta-properties';
 import { removeSurroundingBlock } from '../../helpers/remove-surrounding-block';
-import { BaseTranspilerOptions, TranspilerGenerator } from '../../types/transpiler';
+import { TranspilerGenerator } from '../../types/transpiler';
 import { indent } from '../../helpers/indent';
 import { isSlotProperty, stripSlotPrefix } from '../../helpers/slots';
 import { getCustomImports } from '../../helpers/get-custom-imports';
@@ -38,16 +38,10 @@ import { flow, pipe } from 'fp-ts/lib/function';
 import { MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
+import { ToAureliaOptions } from './types';
+import { DEFAULT_AURELIA_OPTIONS } from './constants';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-
-export interface ToAureliaOptions extends BaseTranspilerOptions {
-  standalone?: boolean;
-  preserveImports?: boolean;
-  preserveFileExtensions?: boolean;
-  importMapper?: Function;
-  bootstrapMapper?: Function;
-}
 
 interface AureliaBlockOptions {
   childComponents?: string[];
@@ -57,9 +51,10 @@ const mappers: {
   [key: string]: (json: MitosisNode, options: ToAureliaOptions) => string;
 } = {
   Fragment: (json, options) => {
-    return `<ng-container>${json.children
+    options;
+    return `<template>${json.children
       .map((item) => blockToAurelia(item, options))
-      .join('\n')}</ng-container>`;
+      .join('\n')}</template>`;
   },
   Slot: (json, options) => {
     const renderChildren = () =>
@@ -82,12 +77,13 @@ const mappers: {
   },
 };
 
+// ${bootstrapMapper ? bootstrapMapper(name, componentsUsed, component) : ''}
 const generateNgModule = (
   content: string,
   name: string,
   componentsUsed: string[],
   component: MitosisComponent,
-  bootstrapMapper: Function | null | undefined,
+  // bootstrapMapper: Function | null | undefined,
 ): string => {
   return `import { NgModule } from "@aurelia/core";
 import { CommonModule } from "@aurelia/common";
@@ -100,7 +96,6 @@ ${content}
     componentsUsed.length ? ', ' + componentsUsed.map((comp) => `${comp}Module`).join(', ') : ''
   }],
   exports: [${name}],
-  ${bootstrapMapper ? bootstrapMapper(name, componentsUsed, component) : ''}
 })
 export class ${name}Module {}`;
 };
@@ -113,7 +108,7 @@ const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
 
 export const blockToAurelia = (
   json: MitosisNode,
-  options: ToAureliaOptions = {},
+  options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
   blockOptions: AureliaBlockOptions = {},
 ): string => {
   const childComponents = blockOptions?.childComponents || [];
@@ -262,7 +257,7 @@ const processAureliaCode =
     );
 
 export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
-  (userOptions = {}) =>
+  (userOptions = DEFAULT_AURELIA_OPTIONS) =>
   ({ component: _component }) => {
     const DEFAULT_OPTIONS = {
       preserveImports: false,
@@ -425,13 +420,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
             styles: `[\`${indent(css, 8)}\`]`,
           }
         : {}),
-      ...(options.standalone
-        ? // TODO: also add child component imports here as well
-          {
-            standalone: 'true',
-            imports: `[${['CommonModule', ...componentsUsed].join(', ')}]`,
-          }
-        : {}),
+      // ...(options.standalone
+      //   ? // TODO: also add child component imports here as well
+      //     {
+      //       standalone: 'true',
+      //       imports: `[${['CommonModule', ...componentsUsed].join(', ')}]`,
+      //     }
+      //   : {}),
     };
     // Taking into consideration what user has passed in options and allowing them to override the default generated metadata
     Object.entries(json.meta.aureliaConfig || {}).forEach(([key, value]) => {
@@ -451,26 +446,27 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       return `const defaultProps = {${defalutPropsString}};\n`;
     };
 
+    // ${options.standalone ? `import { CommonModule } from '@aurelia/common';` : ''}
     let str = dedent`
     import { ${outputs.length ? 'Output, EventEmitter, \n' : ''} ${
       options?.experimental?.inject ? 'Inject, forwardRef,' : ''
     } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
       props.size ? ', Input' : ''
     } } from '@aurelia/core';
-    ${options.standalone ? `import { CommonModule } from '@aurelia/common';` : ''}
 
     ${json.types ? json.types.join('\n') : ''}
     ${getPropsDefinition({ json })}
     ${renderPreComponent({
       component: json,
       target: 'aurelia',
-      excludeMitosisComponents: !options.standalone && !options.preserveImports,
+      excludeMitosisComponents: !options.preserveImports,
+      // excludeMitosisComponents: !options.standalone && !options.preserveImports,
       preserveFileExtensions: options.preserveFileExtensions,
       componentsUsed,
-      importMapper: options?.importMapper,
+      // importMapper: options?.importMapper,
     })}
 
-    @ComponentAurelia({
+    @inlineView({
       ${Object.entries(componentMetadata)
         .map(([k, v]) => `${k}: ${v}`)
         .join(',')}
@@ -568,7 +564,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
   `;
 
-    str = generateNgModule(str, json.name, componentsUsed, json, options.bootstrapMapper);
+    // str = generateNgModule(str, json.name, componentsUsed, json, options.bootstrapMapper);
+    str = generateNgModule(str, json.name, componentsUsed, json);
 
     if (options.plugins) {
       str = runPreCodePlugins(str, options.plugins);

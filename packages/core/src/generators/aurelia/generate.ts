@@ -470,7 +470,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       importMapper: options?.importMapper,
     })}
 
-    @ComponentAurelia({
+    @inlineView({
       ${Object.entries(componentMetadata)
         .map(([k, v]) => `${k}: ${v}`)
         .join(',')}

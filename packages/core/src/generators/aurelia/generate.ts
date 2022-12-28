@@ -41,7 +41,7 @@ import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
 
-export interface ToAngularOptions extends BaseTranspilerOptions {
+export interface ToAureliaOptions extends BaseTranspilerOptions {
   standalone?: boolean;
   preserveImports?: boolean;
   preserveFileExtensions?: boolean;
@@ -49,21 +49,21 @@ export interface ToAngularOptions extends BaseTranspilerOptions {
   bootstrapMapper?: Function;
 }
 
-interface AngularBlockOptions {
+interface AureliaBlockOptions {
   childComponents?: string[];
 }
 
 const mappers: {
-  [key: string]: (json: MitosisNode, options: ToAngularOptions) => string;
+  [key: string]: (json: MitosisNode, options: ToAureliaOptions) => string;
 } = {
   Fragment: (json, options) => {
     return `<ng-container>${json.children
-      .map((item) => blockToAngular(item, options))
+      .map((item) => blockToAurelia(item, options))
       .join('\n')}</ng-container>`;
   },
   Slot: (json, options) => {
     const renderChildren = () =>
-      json.children?.map((item) => blockToAngular(item, options)).join('\n');
+      json.children?.map((item) => blockToAurelia(item, options)).join('\n');
 
     return `<ng-content ${Object.entries({ ...json.bindings, ...json.properties })
       .map(([binding, value]) => {
@@ -89,8 +89,8 @@ const generateNgModule = (
   component: MitosisComponent,
   bootstrapMapper: Function | null | undefined,
 ): string => {
-  return `import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
+  return `import { NgModule } from "@aurelia/core";
+import { CommonModule } from "@aurelia/common";
 
 ${content}
 
@@ -111,10 +111,10 @@ const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
   style: 'ngStyle',
 };
 
-export const blockToAngular = (
+export const blockToAurelia = (
   json: MitosisNode,
-  options: ToAngularOptions = {},
-  blockOptions: AngularBlockOptions = {},
+  options: ToAureliaOptions = {},
+  blockOptions: AureliaBlockOptions = {},
 ): string => {
   const childComponents = blockOptions?.childComponents || [];
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
@@ -149,11 +149,11 @@ export const blockToAngular = (
     str += `<ng-container *ngFor="let ${json.scope.forName} of ${json.bindings.each?.code}${
       indexName ? `; let ${indexName} = index` : ''
     }">`;
-    str += json.children.map((item) => blockToAngular(item, options, blockOptions)).join('\n');
+    str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
     str += `</ng-container>`;
   } else if (json.name === 'Show') {
     str += `<ng-container *ngIf="${json.bindings.when?.code}">`;
-    str += json.children.map((item) => blockToAngular(item, options, blockOptions)).join('\n');
+    str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
     str += `</ng-container>`;
   } else {
     const elSelector = childComponents.find((impName) => impName === json.name)
@@ -161,7 +161,7 @@ export const blockToAngular = (
       : json.name;
     str += `<${elSelector} `;
 
-    // TODO: spread support for angular
+    // TODO: spread support for aurelia
     // if (json.bindings._spread) {
     //   str += `v-bind="${stripStateAndPropsRefs(
     //     json.bindings._spread as string,
@@ -228,7 +228,7 @@ export const blockToAngular = (
     }
 
     if (json.children) {
-      str += json.children.map((item) => blockToAngular(item, options, blockOptions)).join('\n');
+      str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
     }
 
     str += `</${elSelector}>`;
@@ -236,7 +236,7 @@ export const blockToAngular = (
   return str;
 };
 
-const processAngularCode =
+const processAureliaCode =
   ({
     contextVars,
     outputVars,
@@ -261,7 +261,7 @@ const processAngularCode =
       (newCode) => stripStateAndPropsRefs(newCode, { replaceWith }),
     );
 
-export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
+export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
   (userOptions = {}) =>
   ({ component: _component }) => {
     const DEFAULT_OPTIONS = {
@@ -284,7 +284,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
         switch (codeType) {
           case 'hooks':
             return flow(
-              processAngularCode({
+              processAureliaCode({
                 replaceWith: 'this',
                 contextVars,
                 outputVars,
@@ -306,7 +306,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
 
           case 'bindings':
             return (code) => {
-              const newLocal = processAngularCode({
+              const newLocal = processAureliaCode({
                 contextVars: [],
                 outputVars,
                 domRefs: [], // the template doesn't need the this keyword.
@@ -396,7 +396,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
     }
 
     let template = json.children
-      .map((item) => blockToAngular(item, options, { childComponents }))
+      .map((item) => blockToAurelia(item, options, { childComponents }))
       .join('\n');
     if (options.prettier !== false) {
       template = tryFormat(template, 'html');
@@ -406,7 +406,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
 
     const dataString = getStateObjectStringFromComponent(json, {
       format: 'class',
-      valueMapper: processAngularCode({
+      valueMapper: processAureliaCode({
         replaceWith: 'this',
         contextVars,
         outputVars,
@@ -434,7 +434,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
         : {}),
     };
     // Taking into consideration what user has passed in options and allowing them to override the default generated metadata
-    Object.entries(json.meta.angularConfig || {}).forEach(([key, value]) => {
+    Object.entries(json.meta.aureliaConfig || {}).forEach(([key, value]) => {
       componentMetadata[key] = value;
     });
 
@@ -456,21 +456,21 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
       options?.experimental?.inject ? 'Inject, forwardRef,' : ''
     } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
       props.size ? ', Input' : ''
-    } } from '@angular/core';
-    ${options.standalone ? `import { CommonModule } from '@angular/common';` : ''}
+    } } from '@aurelia/core';
+    ${options.standalone ? `import { CommonModule } from '@aurelia/common';` : ''}
 
     ${json.types ? json.types.join('\n') : ''}
     ${getPropsDefinition({ json })}
     ${renderPreComponent({
       component: json,
-      target: 'angular',
+      target: 'aurelia',
       excludeMitosisComponents: !options.standalone && !options.preserveImports,
       preserveFileExtensions: options.preserveFileExtensions,
       componentsUsed,
       importMapper: options?.importMapper,
     })}
 
-    @Component({
+    @ComponentAurelia({
       ${Object.entries(componentMetadata)
         .map(([k, v]) => `${k}: ${v}`)
         .join(',')}
@@ -505,7 +505,7 @@ export const componentToAngular: TranspilerGenerator<ToAngularOptions> =
           const typeParameter = json.refs[ref].typeParameter;
           return `private _${ref}${typeParameter ? `: ${typeParameter}` : ''}${
             argument
-              ? ` = ${processAngularCode({
+              ? ` = ${processAureliaCode({
                   replaceWith: 'this.',
                   contextVars,
                   outputVars,

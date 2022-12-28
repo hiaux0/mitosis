@@ -30,6 +30,7 @@ export const generateCode = async ({
     componentToTemplate,
     componentToSolid,
     componentToAngular,
+    componentToAurelia,
     componentToSvelte,
     componentToMitosis,
     componentToBuilder,
@@ -86,6 +87,8 @@ export const generateCode = async ({
       return componentToSolid(allOptions);
     case 'angular':
       return componentToAngular(allOptions);
+    case 'aurelia':
+      return componentToAurelia(allOptions);
     case 'svelte':
       return componentToSvelte(allOptions);
     case 'mitosis':

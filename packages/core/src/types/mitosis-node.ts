@@ -1,6 +1,6 @@
 import { JSONObject } from './json';
 
-export type Binding = { code: string; arguments?: string[]; type?: 'spread' };
+export type Binding = { code: string; rawCode?: string; arguments?: string[]; type?: 'spread' };
 
 export type BaseNode = {
   '@type': '@builder.io/mitosis/node';

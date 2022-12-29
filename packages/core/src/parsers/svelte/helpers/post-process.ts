@@ -123,7 +123,9 @@ function postProcessState(json: SveltosisComponent) {
 function postProcessChildren(json: SveltosisComponent, children: MitosisNode[]) {
   for (const node of children) {
     addPropertiesAndStateToNode(json, node);
+    // json; /*?*/
     processBindings(json, node);
+    // json; /*?*/
 
     let children: MitosisNode[] = [];
 
@@ -183,9 +185,11 @@ export function postProcess(json: SveltosisComponent) {
   // Call preventNameCollissions here, before the rest (where it applies -- function arguments for now)
   // State (everything except type === 'property')
   postProcessState(json);
+  // json; /*?*/
 
   // Children
   postProcessChildren(json, json.children);
+  // json; /*?*/
 
   // Hooks
   postProcessHooks(json);

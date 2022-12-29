@@ -38,9 +38,11 @@ function mapAstToMitosisJson(
   parseModule(ast, json);
   parseInstance(ast, json);
   parseHtml(ast, json);
+  // json; /*?*/
   parseCss(ast, json);
 
   postProcess(json);
+  // json; /*?*/
 
   if (usesTypescript) {
     collectTypes(string_, json);
@@ -68,6 +70,7 @@ export const parseSvelte = async function (
   );
 
   const ast = parse(processedString.code);
+  // ast.html.children[1].children[3].attributes[1]; /*?*/
   const componentName = path.split('/').pop()?.split('.')[0] ?? 'MyComponent';
   return mapAstToMitosisJson(ast, componentName, string_, usesTypescript);
 };

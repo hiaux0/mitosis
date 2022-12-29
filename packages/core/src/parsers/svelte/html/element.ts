@@ -17,6 +17,8 @@ interface AttributeShorthand {
 const SPECIAL_ELEMENTS = new Set(['svelte:component', 'svelte:element']);
 
 export function parseElement(json: SveltosisComponent, node: TemplateNode) {
+  // node?.attributes[0]; /*?*/
+
   const mitosisNode = createMitosisNode();
   mitosisNode.name = node.name;
 
@@ -33,7 +35,7 @@ export function parseElement(json: SveltosisComponent, node: TemplateNode) {
     return nodeReference;
   };
 
-  /* 
+  /*
     Parse special elements such as svelte:component and svelte:element
   */
   if (SPECIAL_ELEMENTS.has(node.name)) {
@@ -184,8 +186,8 @@ export function parseElement(json: SveltosisComponent, node: TemplateNode) {
           break;
         }
         case 'Binding': {
-          /* 
-            adding onChange handlers for bind:group and bind:property is done during post processing 
+          /*
+            adding onChange handlers for bind:group and bind:property is done during post processing
             same goes for replacing the group binding with checked
             see helpers/post-process.ts
           */
@@ -214,6 +216,8 @@ export function parseElement(json: SveltosisComponent, node: TemplateNode) {
               arguments: ['event'],
             };
           }
+
+          // binding; /*?*/
 
           mitosisNode.bindings[name] = {
             code: binding,

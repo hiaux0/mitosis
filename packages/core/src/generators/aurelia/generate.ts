@@ -48,6 +48,9 @@ enum BuiltInEnums {
   'For' = 'For',
   'Fragment' = 'Fragment',
   'Slot' = 'Slot',
+  'Radio' = 'radio',
+  'Checkbox' = 'checkbox',
+  'Checked' = 'checked',
 }
 
 enum BuiltInKeywords {
@@ -120,7 +123,7 @@ export const blockToAurelia = (
   options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
   blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start },
 ): string => {
-  // blockOptions.callLocation; /*?*/
+  blockOptions.callLocation; /*?*/
   // json.name; /*?*/
   const childComponents = blockOptions?.childComponents || [];
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
@@ -143,7 +146,7 @@ export const blockToAurelia = (
       return `<ng-content select="[${selector}]"></ng-content>`;
     }
 
-    return `{{${textCode}}}`;
+    return `\${${textCode}}`;
   }
 
   let str = '';
@@ -224,7 +227,20 @@ export const blockToAurelia = (
         // Step: toggle($event)
         const replaced = code.replace(regexp, replacer);
         const finalValue = removeSurroundingBlock(replaced);
-        str += ` ${event}.delegate="${finalValue}" `;
+
+        // Step: Input Checkbox
+        // Step: Input Radio
+        json; /*?*/
+        // json.bindings; /*?*/
+        // json.bindings.checked; /*?*/
+        if (
+          json.properties.type !== BuiltInEnums.Radio &&
+          json.properties.type !== BuiltInEnums.Checkbox
+        ) {
+          // Step: Event attribute
+          str += ` ${event}.delegate="${finalValue}" `;
+        }
+        // if (json.properties)
       } else if (key === 'class') {
         str += ` [class]="${code}" `;
       } else if (key === 'ref') {
@@ -308,6 +324,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     // Make a copy we can safely mutate, similar to babel's toolchain
     let json = fastClone(_component);
+    // _component; /*?*/
+    // _component.children[0]; /*?*/
     // /* prettier-ignore */ console.log('Start: componentToAurelia------------------------------------------------------------------------------------------')
     // json; /*?*/
     // /* prettier-ignore */ console.log('End: componentToAurelia------------------------------------------------------------------------------------------')
@@ -428,7 +446,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     if (options.plugins) {
+      json.children[0].children[0].bindings.checked; /*?*/
       json = runPostJsonPlugins(json, options.plugins);
+      json.children[0].children[0].bindings.checked; /*?*/
     }
     let css = collectCss(json);
     if (options.prettier !== false) {

@@ -96,7 +96,7 @@ const getImportedValues = ({ theImport }: { theImport: MitosisImport }): ImportV
   return { starImport, defaultImport, namedImports };
 };
 
-const getImportValue = ({ defaultImport, namedImports, starImport }: ImportValues) => {
+export const getImportValue = ({ defaultImport, namedImports, starImport }: ImportValues) => {
   if (starImport) {
     return ` * as ${starImport} `;
   } else {
@@ -152,7 +152,7 @@ export const renderImport = ({
   }
 
   if (importMapper) {
-    return importMapper(component, theImport, importedValues, componentsUsed);
+    return importMapper(component, theImport, importedValues, componentsUsed, path);
   }
 
   return importValue ? `import ${importValue} from '${path}';` : `import '${path}';`;

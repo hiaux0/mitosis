@@ -8,6 +8,7 @@ interface AureliaVersionOpt {
 }
 
 export interface ToAureliaOptions extends BaseTranspilerOptions, AureliaVersionOpt {
+  importMapper?: Function;
   // cssNamespace?: () => string;
   // namePrefix?: (path: string) => string;
   // asyncComponentImports?: boolean;
@@ -15,3 +16,9 @@ export interface ToAureliaOptions extends BaseTranspilerOptions, AureliaVersionO
 }
 
 export type AureliaOptsWithoutVersion = OmitObj<ToAureliaOptions, AureliaVersionOpt>;
+
+export interface ImportValues {
+  starImport: string | null;
+  defaultImport: string | null;
+  namedImports: string | null;
+}

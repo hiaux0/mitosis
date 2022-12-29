@@ -59,8 +59,20 @@ enum AureliaKeywords {
   'If' = 'if',
 }
 
+enum CallLocation {
+  Start = 'Start',
+  For = 'For',
+  Show = 'Show',
+  Else = 'Else',
+  Fragment = 'Fragment',
+  Slot = 'Slot',
+  Children = 'Children',
+  ChildrenForTemplate = 'ChildrenForTemplate',
+}
+
 interface AureliaBlockOptions {
   childComponents?: string[];
+  callLocation: CallLocation;
 }
 
 const mappers: {
@@ -69,14 +81,17 @@ const mappers: {
   Fragment: (json, options) => {
     options;
     return `<template>${json.children
-      .map((item) => blockToAurelia(item, options))
+      .map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Fragment }))
       .join('\n')}</template>`;
   },
   Slot: (json, options) => {
     const renderChildren = () =>
-      json.children?.map((item) => blockToAurelia(item, options)).join('\n');
+      json.children
+        ?.map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Slot }))
+        .join('\n');
+    const renderedChildren = renderChildren();
 
-    return `<ng-content ${Object.entries({ ...json.bindings, ...json.properties })
+    return `\n<slot ${Object.entries({ ...json.bindings, ...json.properties })
       .map(([binding, value]) => {
         if (value && binding === 'name') {
           const selector = pipe(isString(value) ? value : value.code, stripSlotPrefix, kebabCase);
@@ -89,7 +104,7 @@ const mappers: {
           return value.code;
         }
       })
-      .join('\n')}${renderChildren()}</ng-content>`;
+      .join('\n')}${renderedChildren}</slot>`;
   },
 };
 
@@ -102,8 +117,10 @@ const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
 export const blockToAurelia = (
   json: MitosisNode,
   options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
-  blockOptions: AureliaBlockOptions = {},
+  blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start },
 ): string => {
+  // blockOptions.callLocation; /*?*/
+  // json.name; /*?*/
   const childComponents = blockOptions?.childComponents || [];
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
 
@@ -137,27 +154,37 @@ export const blockToAurelia = (
     str += `<ng-container *ngFor="let ${json.scope.forName} of ${json.bindings.each?.code}${
       indexName ? `; let ${indexName} = index` : ''
     }">`;
-    str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
+    str += json.children
+      .map((item) =>
+        blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.For }),
+      )
+      .join('\n');
     str += `</ng-container>`;
   } else if (json.name === BuiltInEnums.Show) {
     str += `<template ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
     str += json.children
       .map((item) => {
-        return blockToAurelia(item, options, blockOptions);
+        return blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Show });
       })
       .join('\n');
     str += `</template>`;
 
     if (isMitosisNode(json.meta.else)) {
       str += `<template ${AureliaKeywords.Else}>
-      ${blockToAurelia(json.meta.else, options, blockOptions)}
+      ${blockToAurelia(json.meta.else, options, {
+        ...blockOptions,
+        callLocation: CallLocation.Else,
+      })}
       </template>`;
     }
   } else {
+    // json.name; /*?*/
     const elSelector = childComponents.find((impName) => impName === json.name)
       ? kebabCase(json.name)
       : json.name;
-    str += `<${elSelector} `;
+
+    // Step: Opening Tag
+    str += `<${elSelector}`;
 
     for (const key in json.properties) {
       if (key.startsWith('$')) {
@@ -210,7 +237,8 @@ export const blockToAurelia = (
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
         str += ` [attr.${key}]="${code}" `;
       } else {
-        str += `[${key}]="${code}" `;
+        // Step: Attribute binding
+        str += `${key}.bind="${code}" `;
       }
     }
     if (selfClosingTags.has(json.name)) {
@@ -223,11 +251,21 @@ export const blockToAurelia = (
     }
 
     if (json.children) {
-      str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
+      // str; /*?*/
+      str += json.children
+        .map((item) =>
+          blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Children }),
+        )
+        .join('\n');
     }
 
-    str += `</${elSelector}>`;
+    // Step: Closing Tag
+    str += `\n</${elSelector}>`;
+    // str; /*?*/
   }
+
+  // json.name; /*?*/
+  // str; /*?*/
   return str;
 };
 
@@ -259,15 +297,18 @@ const processAureliaCode =
 export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
   (userOptions = DEFAULT_AURELIA_OPTIONS) =>
   ({ component: _component }) => {
-    // if (new Error().stack?.includes('getErrorString')) return '';
+    if (new Error().stack?.includes('getErrorString')) return '';
 
     const DEFAULT_OPTIONS = {
-      preserveImports: false,
+      preserveImports: true,
       preserveFileExtensions: false,
     };
 
     // Make a copy we can safely mutate, similar to babel's toolchain
     let json = fastClone(_component);
+    // /* prettier-ignore */ console.log('Start: componentToAurelia------------------------------------------------------------------------------------------')
+    // json; /*?*/
+    // /* prettier-ignore */ console.log('End: componentToAurelia------------------------------------------------------------------------------------------')
 
     const contextVars = Object.keys(json?.context?.get || {});
     const metaOutputVars: string[] = (json.meta?.useMetadata?.outputs as string[]) || [];
@@ -392,9 +433,30 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       css = tryFormat(css, 'css');
     }
 
-    let template = json.children
-      .map((item) => blockToAurelia(item, options, { childComponents }))
-      .join('\n');
+    // template; /*?*/
+    const aureliaImports = renderPreComponent({
+      component: json,
+      target: 'aurelia',
+      excludeMitosisComponents: !options.preserveImports,
+      // excludeMitosisComponents: !options.standalone && !options.preserveImports,
+      // preserveFileExtensions: options.preserveFileExtensions,
+      componentsUsed,
+      importMapper: options?.importMapper,
+    });
+    aureliaImports; /*?*/
+
+    let template = '';
+
+    template += aureliaImports;
+
+    template += json.children
+      .map((item) =>
+        blockToAurelia(item, options, {
+          childComponents,
+          callLocation: CallLocation.ChildrenForTemplate,
+        }),
+      )
+      .join('\n  ');
     if (options.prettier !== false) {
       template = tryFormat(template, 'html');
     }
@@ -445,28 +507,36 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       return `const defaultProps = {${defalutPropsString}};\n`;
     };
 
+    const finalTemplate = indent(template, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+    // const finalTemplate = template;
+    // const finalTemplate = indent(template, 6);
+    // finalTemplate; /*?*/
     // ${options.standalone ? `import { CommonModule } from '@aurelia/common';` : ''}
     // import { ${outputs.length ? 'Output, EventEmitter, \n' : ''} ${
     //   options?.experimental?.inject ? 'Inject, forwardRef,' : ''
     // } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
     //   props.size ? ', Input' : ''
     // } } from '@aurelia/core';
-    let str = dedent`
+    let str = '';
+
+    // Steps: Imports
+    str = dedent`
     import { inlineView } from "aurelia-framework";
 
     ${json.types ? json.types.join('\n') : ''}
     ${getPropsDefinition({ json })}
-    ${renderPreComponent({
-      component: json,
-      target: 'aurelia',
-      excludeMitosisComponents: !options.preserveImports,
-      // excludeMitosisComponents: !options.standalone && !options.preserveImports,
-      preserveFileExtensions: options.preserveFileExtensions,
-      componentsUsed,
-      // importMapper: options?.importMapper,
-    })}
+    `;
 
-    @inlineView(\`\n  ${indent(template, 3).replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\`)
+    str += '\n';
+    str += '\n';
+
+    // Steps: inlineView
+    str += dedent`
+    @inlineView(\`\n  ${finalTemplate}\`)
+    `;
+
+    // Steps: Class
+    str += dedent`
     export class ${json.name} {
       ${localExportVars.join('\n')}
       ${customImports.map((name) => `${name} = ${name}`).join('\n')}

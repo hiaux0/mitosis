@@ -205,7 +205,7 @@ export const blockToAurelia = (
         continue;
       }
 
-      const { code, arguments: cusArgs = ['event'] } = json.bindings[key]!;
+      const { code, rawCode, arguments: cusArgs = ['event'] } = json.bindings[key]!;
       // TODO: proper babel transform to replace. Util for this
 
       // Event listeners
@@ -233,10 +233,7 @@ export const blockToAurelia = (
         json; /*?*/
         // json.bindings; /*?*/
         // json.bindings.checked; /*?*/
-        if (
-          json.properties.type !== BuiltInEnums.Radio &&
-          json.properties.type !== BuiltInEnums.Checkbox
-        ) {
+        if (isRadioOrCheckbox()) {
           // Step: Event attribute
           str += ` ${event}.delegate="${finalValue}" `;
         }
@@ -251,9 +248,14 @@ export const blockToAurelia = (
       } else if (BINDINGS_MAPPER[key]) {
         str += ` [${BINDINGS_MAPPER[key]}]="${code}"  `;
       } else if (isValidHtmlTag || key.includes('-')) {
-        // Step: Attribute binding
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
-        str += ` ${key}.bind="${code}" `;
+        if (json.bindings.checked) {
+          // Step: Input Radio/Checkbox checked
+          str += ` ${key}.bind="${rawCode}" `;
+        } else {
+          // Step: Attribute binding
+          str += ` ${key}.bind="${code}" `;
+        }
       } else {
         // Step: Attribute binding
         str += `${key}.bind="${code}" `;
@@ -285,6 +287,12 @@ export const blockToAurelia = (
   // json.name; /*?*/
   // str; /*?*/
   return str;
+
+  function isRadioOrCheckbox() {
+    return (
+      json.properties.type !== BuiltInEnums.Radio && json.properties.type !== BuiltInEnums.Checkbox
+    );
+  }
 };
 
 const processAureliaCode =
@@ -446,9 +454,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     if (options.plugins) {
-      json.children[0].children[0].bindings.checked; /*?*/
+      // json.children[0].children[0].bindings.checked; /*?*/
       json = runPostJsonPlugins(json, options.plugins);
-      json.children[0].children[0].bindings.checked; /*?*/
+      // json.children[0].children[0].bindings.checked; /*?*/
     }
     let css = collectCss(json);
     if (options.prettier !== false) {

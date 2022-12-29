@@ -239,7 +239,8 @@ export const blockToAurelia = (
         }
         // if (json.properties)
       } else if (key === 'class') {
-        str += ` [class]="${code}" `;
+        // Step: Class Attribute
+        str += ` class="${code}" `;
       } else if (key === 'ref') {
         str += ` #${code} `;
       } else if (isSlotProperty(key)) {
@@ -561,12 +562,17 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     let str = '';
 
     // Steps: Imports
-    str = dedent`
-    import { inlineView } from "aurelia-framework";
+    str += 'import { ';
+    let importFromAureliaFramework = ['inlineView'];
+    if (props) {
+      importFromAureliaFramework.push('bindable');
+    }
+    importFromAureliaFramework = importFromAureliaFramework.sort((a, b) => {
+      return a.charCodeAt(0) - b.charCodeAt(0);
+    });
 
-    ${json.types ? json.types.join('\n') : ''}
-    ${getPropsDefinition({ json })}
-    `;
+    str += `${importFromAureliaFramework.join(', ')}`;
+    str += ' } from "aurelia-framework"';
 
     str += '\n';
     str += '\n';
@@ -586,7 +592,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
         .filter((item) => !isSlotProperty(item) && item !== 'children')
         .map((item) => {
           const propType = propsTypeRef ? `${propsTypeRef}["${item}"]` : 'any';
-          let propDeclaration = `@Input() ${item}: ${propType}`;
+          // Step: @bindable
+          let propDeclaration = `@bindable() ${item}: ${propType}`;
           if (json.defaultProps && json.defaultProps.hasOwnProperty(item)) {
             propDeclaration += ` = defaultProps["${item}"]`;
           }

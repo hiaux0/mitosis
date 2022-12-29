@@ -38,7 +38,7 @@ import { flow, pipe } from 'fp-ts/lib/function';
 import { isMitosisNode, MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
-import { ToAureliaOptions } from './types';
+import { AureliaV1, ToAureliaOptions } from './types';
 import { DEFAULT_AURELIA_OPTIONS } from './constants';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
@@ -57,6 +57,7 @@ enum BuiltInKeywords {
 enum AureliaKeywords {
   'Else' = 'else',
   'If' = 'if',
+  'Tempalte' = 'template',
 }
 
 enum CallLocation {
@@ -80,9 +81,9 @@ const mappers: {
 } = {
   Fragment: (json, options) => {
     options;
-    return `<template>${json.children
+    return `<${AureliaKeywords.Tempalte}>${json.children
       .map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Fragment }))
-      .join('\n')}</template>`;
+      .join('\n')}</${AureliaKeywords.Tempalte}>`;
   },
   Slot: (json, options) => {
     const renderChildren = () =>
@@ -161,21 +162,21 @@ export const blockToAurelia = (
       .join('\n');
     str += `</ng-container>`;
   } else if (json.name === BuiltInEnums.Show) {
-    str += `<template ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
     str += json.children
       .map((item) => {
         return blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Show });
       })
       .join('\n');
-    str += `</template>`;
+    str += `</${AureliaKeywords.Tempalte}>`;
 
     if (isMitosisNode(json.meta.else)) {
-      str += `<template ${AureliaKeywords.Else}>
+      str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.Else}>
       ${blockToAurelia(json.meta.else, options, {
         ...blockOptions,
         callLocation: CallLocation.Else,
       })}
-      </template>`;
+      </${AureliaKeywords.Tempalte}>`;
     }
   } else {
     // json.name; /*?*/
@@ -234,8 +235,9 @@ export const blockToAurelia = (
       } else if (BINDINGS_MAPPER[key]) {
         str += ` [${BINDINGS_MAPPER[key]}]="${code}"  `;
       } else if (isValidHtmlTag || key.includes('-')) {
+        // Step: Attribute binding
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
-        str += ` [attr.${key}]="${code}" `;
+        str += ` ${key}.bind="${code}" `;
       } else {
         // Step: Attribute binding
         str += `${key}.bind="${code}" `;
@@ -443,9 +445,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
-    aureliaImports; /*?*/
 
     let template = '';
+
+    // Step: Opening template tag V1
+    if (isAureliaV1()) {
+      template += `<${AureliaKeywords.Tempalte}>`;
+    }
 
     template += aureliaImports;
 
@@ -457,6 +463,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
         }),
       )
       .join('\n  ');
+
+    // Step: Closing template tag V1
+    if (isAureliaV1()) {
+      template += `</${AureliaKeywords.Tempalte}>`;
+    }
+
+    // Prettier
     if (options.prettier !== false) {
       template = tryFormat(template, 'html');
     }
@@ -641,6 +654,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     return str;
+
+    function isAureliaV1() {
+      return options.aureliaVersion === AureliaV1;
+    }
   };
 
 const tryFormat = (str: string, parser: string) => {

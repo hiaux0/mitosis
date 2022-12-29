@@ -2,6 +2,8 @@ import { OmitObj } from '../../helpers/typescript';
 import { BaseTranspilerOptions } from '../../types/transpiler';
 
 export type AureliaVersion = 1 | 2;
+export const AureliaV1 = 1;
+export const AureliaV2 = 2;
 
 interface AureliaVersionOpt {
   aureliaVersion: AureliaVersion;

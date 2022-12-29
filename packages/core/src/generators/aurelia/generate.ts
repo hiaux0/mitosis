@@ -35,13 +35,29 @@ import { replaceIdentifiers } from '../../helpers/replace-identifiers';
 import { VALID_HTML_TAGS } from '../../constants/html_tags';
 import { flow, pipe } from 'fp-ts/lib/function';
 
-import { MitosisComponent } from '../..';
+import { isMitosisNode, MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 import { ToAureliaOptions } from './types';
 import { DEFAULT_AURELIA_OPTIONS } from './constants';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
+
+enum BuiltInEnums {
+  'Show' = 'Show',
+  'For' = 'For',
+  'Fragment' = 'Fragment',
+  'Slot' = 'Slot',
+}
+
+enum BuiltInKeywords {
+  'else' = 'else',
+}
+
+enum AureliaKeywords {
+  'Else' = 'else',
+  'If' = 'if',
+}
 
 interface AureliaBlockOptions {
   childComponents?: string[];
@@ -75,29 +91,6 @@ const mappers: {
       })
       .join('\n')}${renderChildren()}</ng-content>`;
   },
-};
-
-// ${bootstrapMapper ? bootstrapMapper(name, componentsUsed, component) : ''}
-const generateNgModule = (
-  content: string,
-  name: string,
-  componentsUsed: string[],
-  component: MitosisComponent,
-  // bootstrapMapper: Function | null | undefined,
-): string => {
-  return `import { NgModule } from "@aurelia/core";
-import { CommonModule } from "@aurelia/common";
-
-${content}
-
-@NgModule({
-  declarations: [${name}],
-  imports: [CommonModule${
-    componentsUsed.length ? ', ' + componentsUsed.map((comp) => `${comp}Module`).join(', ') : ''
-  }],
-  exports: [${name}],
-})
-export class ${name}Module {}`;
 };
 
 // TODO: Maybe in the future allow defining `string | function` as values
@@ -146,22 +139,25 @@ export const blockToAurelia = (
     }">`;
     str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
     str += `</ng-container>`;
-  } else if (json.name === 'Show') {
-    str += `<ng-container *ngIf="${json.bindings.when?.code}">`;
-    str += json.children.map((item) => blockToAurelia(item, options, blockOptions)).join('\n');
-    str += `</ng-container>`;
+  } else if (json.name === BuiltInEnums.Show) {
+    str += `<template ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    str += json.children
+      .map((item) => {
+        return blockToAurelia(item, options, blockOptions);
+      })
+      .join('\n');
+    str += `</template>`;
+
+    if (isMitosisNode(json.meta.else)) {
+      str += `<template ${AureliaKeywords.Else}>
+      ${blockToAurelia(json.meta.else, options, blockOptions)}
+      </template>`;
+    }
   } else {
     const elSelector = childComponents.find((impName) => impName === json.name)
       ? kebabCase(json.name)
       : json.name;
     str += `<${elSelector} `;
-
-    // TODO: spread support for aurelia
-    // if (json.bindings._spread) {
-    //   str += `v-bind="${stripStateAndPropsRefs(
-    //     json.bindings._spread as string,
-    //   )}"`;
-    // }
 
     for (const key in json.properties) {
       if (key.startsWith('$')) {
@@ -181,6 +177,7 @@ export const blockToAurelia = (
       const { code, arguments: cusArgs = ['event'] } = json.bindings[key]!;
       // TODO: proper babel transform to replace. Util for this
 
+      // Event listeners
       if (key.startsWith('on')) {
         let event = key.replace('on', '');
         event = event.charAt(0).toLowerCase() + event.slice(1);
@@ -194,9 +191,12 @@ export const blockToAurelia = (
           '(^|\\n|\\r| |;|\\(|\\[|!)' + eventName + '(\\?\\.|\\.|\\(| |;|\\)|$)',
           'g',
         );
+        // Step: toggle(event)
         const replacer = '$1$event$2';
-        const finalValue = removeSurroundingBlock(code.replace(regexp, replacer));
-        str += ` (${event})="${finalValue}" `;
+        // Step: toggle($event)
+        const replaced = code.replace(regexp, replacer);
+        const finalValue = removeSurroundingBlock(replaced);
+        str += ` ${event}.delegate="${finalValue}" `;
       } else if (key === 'class') {
         str += ` [class]="${code}" `;
       } else if (key === 'ref') {
@@ -259,6 +259,8 @@ const processAureliaCode =
 export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
   (userOptions = DEFAULT_AURELIA_OPTIONS) =>
   ({ component: _component }) => {
+    // if (new Error().stack?.includes('getErrorString')) return '';
+
     const DEFAULT_OPTIONS = {
       preserveImports: false,
       preserveFileExtensions: false,
@@ -411,10 +413,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
     // Preparing built in component metadata parameters
     const componentMetadata: Record<string, any> = {
-      selector: `'${kebabCase(json.name || 'my-component')}, ${json.name}'`,
-      template: `\`
-        ${indent(template, 8).replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}
-        \``,
+      template: indent(template),
       ...(css.length
         ? {
             styles: `[\`${indent(css, 8)}\`]`,
@@ -447,12 +446,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     };
 
     // ${options.standalone ? `import { CommonModule } from '@aurelia/common';` : ''}
+    // import { ${outputs.length ? 'Output, EventEmitter, \n' : ''} ${
+    //   options?.experimental?.inject ? 'Inject, forwardRef,' : ''
+    // } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
+    //   props.size ? ', Input' : ''
+    // } } from '@aurelia/core';
     let str = dedent`
-    import { ${outputs.length ? 'Output, EventEmitter, \n' : ''} ${
-      options?.experimental?.inject ? 'Inject, forwardRef,' : ''
-    } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
-      props.size ? ', Input' : ''
-    } } from '@aurelia/core';
+    import { inlineView } from "aurelia-framework";
 
     ${json.types ? json.types.join('\n') : ''}
     ${getPropsDefinition({ json })}
@@ -466,11 +466,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       // importMapper: options?.importMapper,
     })}
 
-    @inlineView({
-      ${Object.entries(componentMetadata)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(',')}
-    })
+    @inlineView(\`\n  ${indent(template, 3).replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\`)
     export class ${json.name} {
       ${localExportVars.join('\n')}
       ${customImports.map((name) => `${name} = ${name}`).join('\n')}
@@ -563,9 +559,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     }
   `;
-
-    // str = generateNgModule(str, json.name, componentsUsed, json, options.bootstrapMapper);
-    str = generateNgModule(str, json.name, componentsUsed, json);
 
     if (options.plugins) {
       str = runPreCodePlugins(str, options.plugins);

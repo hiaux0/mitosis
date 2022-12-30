@@ -154,8 +154,9 @@ export const blockToAurelia = (
   const needsToRenderSlots = [];
 
   if (checkIsForNode(json)) {
+    // Step: For / Step: Repeat for
     const indexName = json.scope.indexName;
-    str += `<ng-container *ngFor="let ${json.scope.forName} of ${json.bindings.each?.code}${
+    str += `<template repeat.for="${json.scope.forName} of ${json.bindings.each?.code}${
       indexName ? `; let ${indexName} = index` : ''
     }">`;
     str += json.children
@@ -163,7 +164,7 @@ export const blockToAurelia = (
         blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.For }),
       )
       .join('\n');
-    str += `</ng-container>`;
+    str += `</template>`;
   } else if (json.name === BuiltInEnums.Show) {
     str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
     str += json.children
@@ -564,7 +565,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // Steps: Imports
     str += 'import { ';
     let importFromAureliaFramework = ['inlineView'];
-    if (props) {
+    if (props.size) {
       importFromAureliaFramework.push('bindable');
     }
     importFromAureliaFramework = importFromAureliaFramework.sort((a, b) => {

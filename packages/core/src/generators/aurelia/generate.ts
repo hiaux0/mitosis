@@ -499,6 +499,15 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += '${propertyObserver}';
     }
 
+    // Step: Styles
+    if (css) {
+      template += '\n';
+      template += '\n';
+      template += '<style>';
+      template += css;
+      template += '</style>';
+    }
+
     // Step: Closing template tag V1
     if (isAureliaV1()) {
       template += `</${AureliaKeywords.Tempalte}>`;

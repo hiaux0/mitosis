@@ -99,7 +99,8 @@ const mappers: {
       .map(([binding, value]) => {
         if (value && binding === 'name') {
           const selector = pipe(isString(value) ? value : value.code, stripSlotPrefix, kebabCase);
-          return `select="[${selector}]"`;
+          // Step: Slot
+          return `name="${selector}"`;
         }
       })
       .join('\n')}>${Object.entries(json.bindings)

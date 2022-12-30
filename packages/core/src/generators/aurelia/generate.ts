@@ -115,7 +115,7 @@ const mappers: {
 // TODO: Maybe in the future allow defining `string | function` as values
 const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
   innerHTML: 'innerHTML',
-  style: 'ngStyle',
+  style: 'style',
 };
 
 export const blockToAurelia = (
@@ -248,7 +248,7 @@ export const blockToAurelia = (
         const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
         needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
       } else if (BINDINGS_MAPPER[key]) {
-        str += ` [${BINDINGS_MAPPER[key]}]="${code}"  `;
+        str += ` ${BINDINGS_MAPPER[key]}.bind="${code}"  `;
       } else if (isValidHtmlTag || key.includes('-')) {
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
         if (json.bindings.checked) {

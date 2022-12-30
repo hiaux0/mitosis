@@ -123,7 +123,7 @@ export const blockToAurelia = (
   options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
   blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start },
 ): string => {
-  blockOptions.callLocation; /*?*/
+  // blockOptions.callLocation; /*?*/
   // json.name; /*?*/
   const childComponents = blockOptions?.childComponents || [];
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
@@ -231,7 +231,6 @@ export const blockToAurelia = (
 
         // Step: Input Checkbox
         // Step: Input Radio
-        json; /*?*/
         // json.bindings; /*?*/
         // json.bindings.checked; /*?*/
         if (isRadioOrCheckbox()) {
@@ -645,7 +644,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${
         !hasOnMount
           ? ''
-          : `ngOnInit() {
+          : `attached() {
 
               ${
                 !json.hooks?.onMount
@@ -660,7 +659,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${
         !json.hooks.onUpdate?.length
           ? ''
-          : `ngAfterContentChecked() {
+          : `propertyChanged(newValue, oldValue) {
               ${json.hooks.onUpdate.reduce((code, hook) => {
                 code += hook.code;
                 return code + '\n';
@@ -671,7 +670,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${
         !json.hooks.onUnMount
           ? ''
-          : `ngOnDestroy() {
+          : `detached() {
               ${json.hooks.onUnMount.code}
             }`
       }

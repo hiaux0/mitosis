@@ -3,6 +3,7 @@ import { getImportValue } from '../../helpers/render-imports';
 import { AureliaVersion, ImportValues, ToAureliaOptions } from './types';
 
 export const DEFAULT_AURELIA_VERSION: AureliaVersion = 1;
+export const IMPORT_MARKER = '[[MARKER]]';
 
 export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
   aureliaVersion: DEFAULT_AURELIA_VERSION,
@@ -19,7 +20,9 @@ export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
     //  args/*?*/
     const importValue = getImportValue(importedValues);
 
-    const mapped = importValue ? `<require from="${path}"></require>` : `import '${path}';`;
+    const mapped = importValue
+      ? `${IMPORT_MARKER}<require from="${path}"></require>`
+      : `import '${path}';`;
 
     return mapped;
   },

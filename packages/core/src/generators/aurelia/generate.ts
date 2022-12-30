@@ -39,9 +39,10 @@ import { isMitosisNode, MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 import { AureliaV1, ToAureliaOptions } from './types';
-import { DEFAULT_AURELIA_OPTIONS } from './constants';
+import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER } from './constants';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
+const IS_DEV = true;
 
 enum BuiltInEnums {
   'Show' = 'Show',
@@ -475,6 +476,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
+    const [jsImports, templateImports] = aureliaImports.split(IMPORT_MARKER);
 
     let template = '';
 
@@ -483,7 +485,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += `<${AureliaKeywords.Tempalte}>`;
     }
 
-    template += aureliaImports;
+    if (templateImports) {
+      template += templateImports;
+    }
 
     template += json.children
       .map((item) =>
@@ -530,6 +534,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
         stateVars,
       }),
     });
+
     // Preparing built in component metadata parameters
     const componentMetadata: Record<string, any> = {
       template: indent(template),
@@ -579,6 +584,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // Steps: Imports
     str += 'import { ';
     let importFromAureliaFramework = ['inlineView'];
+    if (IS_DEV) {
+      importFromAureliaFramework.push('customElement');
+    }
     if (props.size) {
       importFromAureliaFramework.push('bindable');
     }
@@ -592,6 +600,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     str += `${importFromAureliaFramework.join(', ')}`;
     str += ' } from "aurelia-framework"';
+
+    str += '\n';
+    str += '\n';
+
+    if (jsImports) {
+      str += jsImports;
+    }
 
     str += '\n';
     str += '\n';
@@ -621,6 +636,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     // Steps: inlineView
     str += dedent`
+    ${IS_DEV ? '@customElement("my-component")' : ''}
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
 

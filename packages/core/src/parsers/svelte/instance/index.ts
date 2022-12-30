@@ -134,7 +134,9 @@ export function parseInstance(ast: Ast, json: SveltosisComponent) {
           parent.type === 'Program' && handleVariableDeclaration(json, node as VariableDeclaration);
           break;
         case 'LabeledStatement':
+          // json; /*?*/
           handleLabeledStatement(json, node as LabeledStatement);
+          // json; /*?*/
           break;
         case 'IfStatement':
         case 'SwitchStatement':

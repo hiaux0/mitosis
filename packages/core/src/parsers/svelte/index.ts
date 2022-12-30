@@ -36,6 +36,7 @@ function mapAstToMitosisJson(
   };
 
   parseModule(ast, json);
+  // json; /*?*/
   parseInstance(ast, json);
   parseHtml(ast, json);
   // json; /*?*/

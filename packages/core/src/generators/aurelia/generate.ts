@@ -493,6 +493,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       )
       .join('\n  ');
 
+    // Step: onUpdate
+    if (json.hooks.onUpdate) {
+      template += '${propertyObserver}';
+    }
+
     // Step: Closing template tag V1
     if (isAureliaV1()) {
       template += `</${AureliaKeywords.Tempalte}>`;
@@ -567,6 +572,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     if (props.size) {
       importFromAureliaFramework.push('bindable');
     }
+    if (json.hooks.onUpdate) {
+      importFromAureliaFramework.push('computedFrom');
+    }
+
     importFromAureliaFramework = importFromAureliaFramework.sort((a, b) => {
       return a.charCodeAt(0) - b.charCodeAt(0);
     });
@@ -576,6 +585,29 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     str += '\n';
     str += '\n';
+
+    // Step: onUpdate
+    /**
+     * Aurelia does not have a hook, that updates on change of _any_ property.
+     */
+    const deps = json.hooks.onUpdate?.reduce((prev, curr) => {
+      if (curr.rawDeps) {
+        prev.push(...curr.rawDeps);
+      }
+      return prev;
+    }, [] as string[]);
+    const withQuotes = deps?.map((dep) => `"${dep}"`);
+    const computedFromArgs = withQuotes?.join(', ');
+
+    const onUpdateCode = !json.hooks.onUpdate?.length
+      ? ''
+      : `@computedFrom(${computedFromArgs})\n  get propertyObserver() {
+               ${json.hooks.onUpdate.reduce((code, hook) => {
+                 code += hook.code;
+                 return code + '\n';
+               }, '')}
+               return
+             }`;
 
     // Steps: inlineView
     str += dedent`
@@ -656,16 +688,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
             }`
       }
 
-      ${
-        !json.hooks.onUpdate?.length
-          ? ''
-          : `propertyChanged(newValue, oldValue) {
-              ${json.hooks.onUpdate.reduce((code, hook) => {
-                code += hook.code;
-                return code + '\n';
-              }, '')}
-            }`
-      }
+      ${onUpdateCode}
 
       ${
         !json.hooks.onUnMount

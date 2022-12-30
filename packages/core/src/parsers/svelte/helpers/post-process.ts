@@ -149,6 +149,7 @@ function postProcessChildren(json: SveltosisComponent, children: MitosisNode[]) 
 
 function addPropertiesAndStateToHook(json: SveltosisComponent, hook: extendedHook): extendedHook {
   return {
+    ...hook,
     code: addPropertiesAndState(json, hook.code),
     deps: addPropertiesAndState(json, hook.deps || ''),
   };

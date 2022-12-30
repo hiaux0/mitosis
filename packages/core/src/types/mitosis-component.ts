@@ -40,7 +40,7 @@ export interface ContextSetInfo {
   ref?: string;
 }
 
-export type extendedHook = { code: string; deps?: string };
+export type extendedHook = { code: string; deps?: string; rawDeps?: string[] };
 
 export type MitosisComponentInput = {
   name: string;

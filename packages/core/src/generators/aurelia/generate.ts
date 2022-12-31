@@ -797,9 +797,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
      */
     const customImports = getCustomImports(json);
     const { exports: localExports = {} } = json;
-    const localExportVars = Object.keys(localExports)
-      .filter((key) => localExports[key].usedInLocal)
-      .map((key) => `${key} = ${key};`);
+    const localExportVars = Object.keys(localExports).filter(
+      (key) => localExports[key].usedInLocal,
+    );
     const assignImportedVars = Array.from(
       new Set([...usedVars, ...customImports, ...localExportVars]),
     );

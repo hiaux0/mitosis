@@ -532,7 +532,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     mapRefs(json, (refName) => {
       const isDomRef = domRefs.has(refName);
-      return `this.${isDomRef ? '' : '_'}${refName}${isDomRef ? '.nativeElement' : ''}`;
+      return `this.${isDomRef ? '' : '_'}${refName}`;
     });
 
     if (options.plugins) {

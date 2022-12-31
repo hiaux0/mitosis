@@ -39,7 +39,7 @@ import { isMitosisNode, MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 import { AureliaV1, ToAureliaOptions } from './types';
-import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER } from './constants';
+import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './constants';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
 const IS_DEV = true;
@@ -406,8 +406,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       });
     });
 
-    const customImports = getCustomImports(json);
-
     const { exports: localExports = {} } = json;
     const localExportVars = Object.keys(localExports)
       .filter((key) => localExports[key].usedInLocal)
@@ -476,7 +474,15 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
-    const [jsImports, ...templateImports] = aureliaImports.split(IMPORT_MARKER);
+    // aureliaImports; /*?*/
+    const [jsExports, ...otherMapped] = aureliaImports.split(IMPORT_MARKER);
+    const templateImports: string[] = [];
+    const jsImports: string[] = [];
+    otherMapped.forEach((mapped) => {
+      const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
+      templateImports.push(templateImport);
+      jsImports.push(jsImport);
+    });
 
     let template = '';
 
@@ -485,7 +491,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += `<${AureliaKeywords.Tempalte}>`;
     }
 
-    if (templateImports) {
+    if (otherMapped) {
       template += templateImports.join('');
     }
 
@@ -608,6 +614,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       str += jsImports;
     }
 
+    if (jsExports) {
+      str += jsExports;
+    }
+
     str += '\n';
     str += '\n';
 
@@ -646,11 +656,33 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
 
+    // assignImportedVariables()
+    const importedVars = json.imports?.flatMap((imported) => {
+      /**
+       * `import { Builder as AST } from '@builder.io/sdk';`
+       * -->
+       * AST
+       */
+      const _importedVars = Object.keys(imported.imports);
+      return [..._importedVars];
+    });
+    const usedVars = importedVars.filter((variable) => {
+      const used = template.includes(variable); // TODO Find a more precise way to deterimne whether a var was used
+      return used;
+    });
+    /**
+     * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
+     * `import { Builder } from '@builder.io/sdk';`
+     * here, `Builder` will not be assigned to class
+     */
+    const customImports = getCustomImports(json);
+    const assignImportedVars = Array.from(new Set([...usedVars, ...customImports]));
+
     // Step: Class
     str += dedent`
     export class ${json.name} {
       ${localExportVars.join('\n')}
-      ${customImports.map((name) => `${name} = ${name}`).join('\n')}
+      ${assignImportedVars.map((name) => `${name} = ${name}`).join('\n')}
 
       ${Array.from(props)
         .filter((item) => !isSlotProperty(item) && item !== 'children')

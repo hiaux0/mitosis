@@ -4,6 +4,7 @@ import { AureliaVersion, ImportValues, ToAureliaOptions } from './types';
 
 export const DEFAULT_AURELIA_VERSION: AureliaVersion = 1;
 export const IMPORT_MARKER = '[[MARKER]]';
+export const MARKER_JS_MAPPED = '[[JS_MARKER]]';
 
 export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
   aureliaVersion: DEFAULT_AURELIA_VERSION,
@@ -18,10 +19,14 @@ export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
   ) => {
     const importValue = getImportValue(importedValues);
 
-    const mapped = importValue
+    const templateMapped = importValue
       ? `${IMPORT_MARKER}<require from="${path}"></require>`
       : `import '${path}';`;
 
-    return mapped;
+    const jsMapped = importValue ? `import ${importValue} from '${path}';` : `import '${path}';`;
+
+    const finalMapped = `${templateMapped}${MARKER_JS_MAPPED}${jsMapped}`;
+
+    return finalMapped;
   },
 };

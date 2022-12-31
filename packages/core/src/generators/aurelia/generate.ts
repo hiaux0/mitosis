@@ -43,6 +43,7 @@ import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './cons
 import { encodeQuotes } from '../vue/helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
+const DEBUG = false;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -167,7 +168,7 @@ export const blockToAurelia = (
   if (checkIsForNode(json)) {
     // Step: For / Step: Repeat for
     str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${json.bindings.each?.code}">`;
-    if (IS_DEV) {
+    if (DEBUG) {
       str += '--[[For]]--';
     }
 
@@ -235,7 +236,7 @@ export const blockToAurelia = (
             if (!spread) return;
             str += ` TODO_${spread}.bind="${encodeQuotes(spread)}"`;
 
-            if (IS_DEV) {
+            if (DEBUG) {
               str += '--[[Spread]]--';
             }
           });
@@ -282,13 +283,13 @@ export const blockToAurelia = (
       } else if (key === 'class') {
         // Step: Class Attribute
         str += ` class="${code}" `;
-        if (IS_DEV) {
+        if (DEBUG) {
           str += '--[[Class]]--';
         }
       } else if (key === 'ref') {
         // Step: Ref
         str += ` ref=${code} `;
-        if (IS_DEV) {
+        if (DEBUG) {
           str += '--[[ref]]--';
         }
       } else if (isSlotProperty(key)) {
@@ -297,7 +298,7 @@ export const blockToAurelia = (
       } else if (BINDINGS_MAPPER[key]) {
         str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code)}"  `;
 
-        if (IS_DEV) {
+        if (DEBUG) {
           str += '--[[BINDINGS_MAPPER[key]]]--';
         }
       } else if (isValidHtmlTag || key.includes('-')) {
@@ -312,7 +313,7 @@ export const blockToAurelia = (
           } else {
             // Step: Attribute binding
             str += ` ${key}.bind="${code}" `;
-            if (IS_DEV) {
+            if (DEBUG) {
               str += '--[[Attribute1]]--';
             }
           }
@@ -320,7 +321,7 @@ export const blockToAurelia = (
       } else {
         // Step: Attribute binding
         str += ` ${key}.bind="${code}" `;
-        if (IS_DEV) {
+        if (DEBUG) {
           str += '--[[Attribute2]]--';
         }
       }
@@ -551,7 +552,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // Step: Template imports
     if (otherMapped) {
       template += templateImports.join('');
-      if (IS_DEV) {
+      if (DEBUG) {
         template += '--[[TemplateImports]]--';
       }
       template += '\n';
@@ -571,7 +572,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     if (json.hooks.onUpdate) {
       template += '${propertyObserver}';
 
-      if (IS_DEV) {
+      if (DEBUG) {
         template += '--[[onUpdate]]--';
       }
     }
@@ -583,7 +584,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += '<style>';
       template += css;
       template += '</style>';
-      if (IS_DEV) {
+      if (DEBUG) {
         template += '--[[Styles]]--';
       }
     }
@@ -779,7 +780,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${Array.from(domRefs)
         .map((refName) => `${refName}: HTMLElement`)
         .join('\n')}
-      ${IS_DEV ? '// --[[vmref]]--' : ''}
+      ${DEBUG ? '// --[[vmref]]--' : ''}
 
       ${dataString}
 

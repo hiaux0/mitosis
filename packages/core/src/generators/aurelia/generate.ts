@@ -90,17 +90,25 @@ interface AureliaBlockOptions {
 }
 
 const mappers: {
-  [key: string]: (json: MitosisNode, options: ToAureliaOptions) => string;
+  [key: string]: (
+    json: MitosisNode,
+    options: ToAureliaOptions,
+    blockOptions: AureliaBlockOptions,
+  ) => string;
 } = {
-  Fragment: (json, options) => {
+  Fragment: (json, options, blockOptions) => {
     return `${json.children
-      .map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Fragment }))
+      .map((item) =>
+        blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Fragment }),
+      )
       .join('\n')}`;
   },
-  Slot: (json, options) => {
+  Slot: (json, options, blockOptions) => {
     const renderChildren = () =>
       json.children
-        ?.map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Slot }))
+        ?.map((item) =>
+          blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Slot }),
+        )
         .join('\n');
     const renderedChildren = renderChildren();
 
@@ -139,7 +147,7 @@ export const blockToAurelia = (
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
 
   if (mappers[json.name]) {
-    return mappers[json.name](json, options);
+    return mappers[json.name](json, options, blockOptions);
   }
 
   if (isChildren({ node: json })) {
@@ -194,7 +202,6 @@ export const blockToAurelia = (
       blockOptions.indexNameTracker = [];
     }
     const indexName = json.scope.indexName;
-    indexName; /*?*/
     if (indexName) {
       blockOptions.indexNameTracker.push(indexName);
     }

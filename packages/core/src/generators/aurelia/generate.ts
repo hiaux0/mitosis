@@ -167,6 +167,9 @@ export const blockToAurelia = (
   if (checkIsForNode(json)) {
     // Step: For / Step: Repeat for
     str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${json.bindings.each?.code}">`;
+    if (IS_DEV) {
+      str += '--[[For]]--';
+    }
 
     // Step: $index
     if (!blockOptions.indexNameTracker) {
@@ -222,6 +225,7 @@ export const blockToAurelia = (
           value?.code === 'props' ? '$props' : value?.code,
         );
 
+        // Step: Spread
         if (spreads?.length) {
           // if (spreads.length > 1) {
           //   let spreadsString = `{...${spreads.join(', ...')}}`;
@@ -230,6 +234,10 @@ export const blockToAurelia = (
           spreads.forEach((spread) => {
             if (!spread) return;
             str += ` TODO_${spread}.bind="${encodeQuotes(spread)}"`;
+
+            if (IS_DEV) {
+              str += '--[[Spread]]--';
+            }
           });
           // }
         }
@@ -274,14 +282,24 @@ export const blockToAurelia = (
       } else if (key === 'class') {
         // Step: Class Attribute
         str += ` class="${code}" `;
+        if (IS_DEV) {
+          str += '--[[Class]]--';
+        }
       } else if (key === 'ref') {
         // Step: Ref
         str += ` ref=${code} `;
+        if (IS_DEV) {
+          str += '--[[ref]]--';
+        }
       } else if (isSlotProperty(key)) {
         const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
         needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
       } else if (BINDINGS_MAPPER[key]) {
         str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code)}"  `;
+
+        if (IS_DEV) {
+          str += '--[[BINDINGS_MAPPER[key]]]--';
+        }
       } else if (isValidHtmlTag || key.includes('-')) {
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
         if (json.bindings.checked) {
@@ -294,11 +312,17 @@ export const blockToAurelia = (
           } else {
             // Step: Attribute binding
             str += ` ${key}.bind="${code}" `;
+            if (IS_DEV) {
+              str += '--[[Attribute1]]--';
+            }
           }
         }
       } else {
         // Step: Attribute binding
         str += ` ${key}.bind="${code}" `;
+        if (IS_DEV) {
+          str += '--[[Attribute2]]--';
+        }
       }
     }
     if (selfClosingTags.has(json.name)) {
@@ -529,8 +553,14 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += `<${AureliaKeywords.Tempalte}>`;
     }
 
+    // Step: Template imports
     if (otherMapped) {
       template += templateImports.join('');
+      if (IS_DEV) {
+        template += '--[[TemplateImports]]--';
+      }
+      template += '\n';
+      template += '\n';
     }
 
     template += json.children
@@ -545,6 +575,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // Step: onUpdate
     if (json.hooks.onUpdate) {
       template += '${propertyObserver}';
+
+      if (IS_DEV) {
+        template += '--[[onUpdate]]--';
+      }
     }
 
     // Step: Styles
@@ -554,6 +588,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += '<style>';
       template += css;
       template += '</style>';
+      if (IS_DEV) {
+        template += '--[[Styles]]--';
+      }
     }
 
     // Step: Closing template tag V1
@@ -694,7 +731,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
 
-    // assignImportedVariables()
+    // Step: Import
     const importedVars = json.imports?.flatMap((imported) => {
       /**
        * `import { Builder as AST } from '@builder.io/sdk';`
@@ -721,6 +758,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     export class ${json.name} {
       ${localExportVars.join('\n')}
       ${assignImportedVars.map((name) => `${name} = ${name}`).join('\n')}
+      ${IS_DEV ? '// --[[ViewModelImport]]--' : ''}
 
       ${Array.from(props)
         .filter((item) => !isSlotProperty(item) && item !== 'children')
@@ -734,12 +772,14 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
           return propDeclaration;
         })
         .join('\n')}
+      ${IS_DEV ? '// --[[@bindable]]--' : ''}
 
       ${outputs.join('\n')}
 
       ${Array.from(domRefs)
         .map((refName) => `${refName}: HTMLElement`)
         .join('\n')}
+      ${IS_DEV ? '// --[[vmref]]--' : ''}
 
       ${dataString}
 

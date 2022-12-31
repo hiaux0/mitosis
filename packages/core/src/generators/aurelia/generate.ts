@@ -22,7 +22,7 @@ import isChildren from '../../helpers/is-children';
 import { getProps } from '../../helpers/get-props';
 import { getPropsRef } from '../../helpers/get-props-ref';
 import { getPropFunctions } from '../../helpers/get-prop-functions';
-import { isString, kebabCase, uniq } from 'lodash';
+import { filter, isString, kebabCase, uniq } from 'lodash';
 import { stripMetaProperties } from '../../helpers/strip-meta-properties';
 import { removeSurroundingBlock } from '../../helpers/remove-surrounding-block';
 import { TranspilerGenerator } from '../../types/transpiler';
@@ -40,6 +40,7 @@ import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 import { AureliaV1, ToAureliaOptions } from './types';
 import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './constants';
+import { encodeQuotes } from '../vue/helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
 const IS_DEV = true;
@@ -140,6 +141,7 @@ export const blockToAurelia = (
   if (json.properties._text) {
     return json.properties._text;
   }
+
   const textCode = json.bindings._text?.code;
   if (textCode) {
     if (isSlotProperty(textCode)) {
@@ -151,6 +153,10 @@ export const blockToAurelia = (
   }
 
   let str = '';
+
+  let spreads = filter(json.bindings, (binding) => binding?.type === 'spread').map((value) =>
+    value?.code === 'props' ? '$props' : value?.code,
+  );
 
   const needsToRenderSlots = [];
 
@@ -200,6 +206,18 @@ export const blockToAurelia = (
       str += ` ${key}="${value}" `;
     }
     for (const key in json.bindings) {
+      if (spreads?.length) {
+        // if (spreads.length > 1) {
+        //   let spreadsString = `{...${spreads.join(', ...')}}`;
+        //   str += ` v-bind="${encodeQuotes(spreadsString)}"`;
+        // } else {
+        spreads.forEach((spread) => {
+          if (!spread) return;
+          str += ` ${spread}.bind="${encodeQuotes(spread)}"`;
+        });
+        // }
+      }
+
       if (json.bindings[key]?.type === 'spread') {
         continue;
       }
@@ -380,7 +398,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
                 outputVars,
                 domRefs: [], // the template doesn't need the this keyword.
               })(code);
-              return newLocal.replace(/"/g, '&quot;');
+              const result = newLocal.replace(/"/g, '&quot;');
+              return result;
             };
           case 'hooks-deps':
           case 'state':

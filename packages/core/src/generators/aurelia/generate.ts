@@ -468,11 +468,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       });
     });
 
-    const { exports: localExports = {} } = json;
-    const localExportVars = Object.keys(localExports)
-      .filter((key) => localExports[key].usedInLocal)
-      .map((key) => `${key} = ${key};`);
-
     const injectables: string[] = contextVars.map((variableName) => {
       const variableType = json?.context?.get[variableName].name;
       if (options?.experimental?.injectables) {
@@ -751,15 +746,17 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
      * here, `Builder` will not be assigned to class
      */
     const customImports = getCustomImports(json);
-    const assignImportedVars = Array.from(new Set([...usedVars, ...customImports]));
+    const { exports: localExports = {} } = json;
+    const localExportVars = Object.keys(localExports)
+      .filter((key) => localExports[key].usedInLocal)
+      .map((key) => `${key} = ${key};`);
+    const assignImportedVars = Array.from(
+      new Set([...usedVars, ...customImports, ...localExportVars]),
+    );
 
     // Step: Class
     str += dedent`
     export class ${json.name} {
-      ${localExportVars.join('\n')}
-      ${assignImportedVars.map((name) => `${name} = ${name}`).join('\n')}
-      ${IS_DEV ? '// --[[ViewModelImport]]--' : ''}
-
       ${Array.from(props)
         .filter((item) => !isSlotProperty(item) && item !== 'children')
         .map((item) => {
@@ -772,7 +769,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
           return propDeclaration;
         })
         .join('\n')}
-      ${IS_DEV ? '// --[[@bindable]]--' : ''}
+      ${DEBUG ? '// --[[@bindable]]--' : ''}
+
+      ${assignImportedVars.map((name) => `${name} = ${name}`).join('\n')}
+      ${DEBUG ? '// --[[ViewModelImport]]--' : ''}
 
       ${outputs.join('\n')}
 

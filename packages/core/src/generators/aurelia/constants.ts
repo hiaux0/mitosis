@@ -16,8 +16,6 @@ export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
     componentsUsed: string[],
     path: string,
   ) => {
-    theImport; /*?*/
-    //  args/*?*/
     const importValue = getImportValue(importedValues);
 
     const mapped = importValue

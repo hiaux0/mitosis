@@ -581,7 +581,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // } } from '@aurelia/core';
     let str = '';
 
-    // Steps: Imports
+    // Step: Imports
     str += 'import { ';
     let importFromAureliaFramework = ['inlineView'];
     if (IS_DEV) {
@@ -640,13 +640,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
                return
              }`;
 
-    // Steps: inlineView
+    // Step: inlineView
     str += dedent`
     ${IS_DEV ? '@customElement("my-component")' : ''}
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
 
-    // Steps: Class
+    // Step: Class
     str += dedent`
     export class ${json.name} {
       ${localExportVars.join('\n')}

@@ -151,14 +151,32 @@ export const blockToAurelia = (
     return json.properties._text;
   }
 
+  // Step: text
   const textCode = json.bindings._text?.code;
   if (textCode) {
+    let result = '';
     if (isSlotProperty(textCode)) {
       const selector = pipe(textCode, stripSlotPrefix, kebabCase);
       return `<slot select="[${selector}]"></slot>`;
     }
 
-    return `\${${textCode}}`;
+    if (blockOptions.indexNameTracker?.includes(textCode)) {
+      // Step: $index
+      result = '';
+      result += `\${$index}`;
+      if (DEBUG) {
+        result += '--[[$index]]--';
+      }
+      return result;
+    }
+
+    // Step: text interpolation
+    result = '';
+    result += `\${${textCode}}`;
+    if (DEBUG) {
+      result += '--[[text]]--';
+    }
+    return result;
   }
 
   let str = '';
@@ -177,6 +195,7 @@ export const blockToAurelia = (
       blockOptions.indexNameTracker = [];
     }
     const indexName = json.scope.indexName;
+    indexName; /*?*/
     if (indexName) {
       blockOptions.indexNameTracker.push(indexName);
     }
@@ -277,12 +296,16 @@ export const blockToAurelia = (
         // json.bindings.checked; /*?*/
         if (isRadioOrCheckbox()) {
           // Step: Event attribute
-          str += ` ${event}.delegate="${finalValue}" `;
+          str += ` ${event}.delegate="${indent(finalValue)}" `;
+
+          if (DEBUG) {
+            str += '--[[.delegate]]--';
+          }
         }
         // if (json.properties)
       } else if (key === 'class') {
         // Step: Class Attribute
-        str += ` class="${code}" `;
+        str += ` class="\${${code}}" `;
         if (DEBUG) {
           str += '--[[Class]]--';
         }
@@ -682,7 +705,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     str += '\n';
 
     if (jsImports) {
-      str += jsImports;
+      str += jsImports.join('');
+
+      if (DEBUG) {
+        str += '--[[jsImports]]--';
+      }
     }
 
     if (jsExports) {

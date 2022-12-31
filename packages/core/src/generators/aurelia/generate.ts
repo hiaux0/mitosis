@@ -572,6 +572,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += `<${AureliaKeywords.Tempalte}>`;
     }
 
+    if (IS_DEV) {
+      template += 'test';
+    }
+
     // Step: Template imports
     if (otherMapped) {
       template += templateImports.join('');

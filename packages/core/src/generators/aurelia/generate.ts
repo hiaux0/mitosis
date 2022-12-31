@@ -245,8 +245,8 @@ export const blockToAurelia = (
     }
     for (const key in json.bindings) {
       if (json.bindings[key]?.type === 'spread') {
-        let spreads = filter(json.bindings, (binding) => binding?.type === 'spread').map((value) =>
-          value?.code === 'props' ? '$props' : value?.code,
+        let spreads = filter(json.bindings, (binding) => binding?.type === 'spread').map(
+          (value) => value?.code,
         );
 
         // Step: Spread
@@ -255,9 +255,12 @@ export const blockToAurelia = (
           //   let spreadsString = `{...${spreads.join(', ...')}}`;
           //   str += ` v-bind="${encodeQuotes(spreadsString)}"`;
           // } else {
-          spreads.forEach((spread) => {
+          spreads.forEach((spread, _spreadIndex) => {
             if (!spread) return;
-            str += ` spreadProps.bind="${encodeQuotes(spread)}"`;
+            if (spread !== key) return;
+
+            const spreadIndex = spreads.length === 1 ? '' : _spreadIndex;
+            str += ` spreadProps${spreadIndex}.bind="${encodeQuotes(spread)}"`;
 
             if (DEBUG) {
               str += '--[[Spread]]--';

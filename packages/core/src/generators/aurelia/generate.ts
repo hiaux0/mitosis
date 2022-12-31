@@ -21,8 +21,7 @@ import {
 import isChildren from '../../helpers/is-children';
 import { getProps } from '../../helpers/get-props';
 import { getPropsRef } from '../../helpers/get-props-ref';
-import { getPropFunctions } from '../../helpers/get-prop-functions';
-import { filter, isString, kebabCase, uniq } from 'lodash';
+import { filter, isString, kebabCase } from 'lodash';
 import { stripMetaProperties } from '../../helpers/strip-meta-properties';
 import { removeSurroundingBlock } from '../../helpers/remove-surrounding-block';
 import { TranspilerGenerator } from '../../types/transpiler';
@@ -427,8 +426,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // /* prettier-ignore */ console.log('End: componentToAurelia------------------------------------------------------------------------------------------')
 
     const contextVars = Object.keys(json?.context?.get || {});
-    const metaOutputVars: string[] = (json.meta?.useMetadata?.outputs as string[]) || [];
-    const outputVars = uniq([...metaOutputVars, ...getPropFunctions(json)]);
+    const outputVars: string[] = []; // TODO Angular remnant
     const stateVars = Object.keys(json?.state || {});
 
     const options = mergeOptions({ ...DEFAULT_OPTIONS, ...userOptions });
@@ -708,23 +706,43 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     str += '\n';
     str += '\n';
 
-    if (jsImports) {
+    if (jsImports.length) {
       str += jsImports.join('');
 
       if (DEBUG) {
         str += '--[[jsImports]]--';
       }
+
+      str += '\n';
+      str += '\n';
     }
 
-    if (jsExports) {
+    if (jsExports.trim().length) {
       str += jsExports;
+      if (DEBUG) {
+        str += '// --[[jsExports]]--';
+      }
+      str += '\n';
+      str += '\n';
     }
 
-    str += '\n';
-    str += '\n';
-
-    if (json.types) {
+    if (json.types?.length) {
       str += json.types.join('\n');
+      if (DEBUG) {
+        str += '// --[[json.types]]--';
+      }
+      str += '\n';
+      str += '\n';
+    }
+
+    // Step: defaultProps
+    const defaultProps = getPropsDefinition({ json });
+    if (defaultProps) {
+      str += getPropsDefinition({ json });
+      if (DEBUG) {
+        str += '// --[[defautProps]]--';
+      }
+
       str += '\n';
       str += '\n';
     }

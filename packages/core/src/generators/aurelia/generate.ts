@@ -168,7 +168,7 @@ export const blockToAurelia = (
     // Step: For / Step: Repeat for
     str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${json.bindings.each?.code}">`;
 
-    // Steps: $index
+    // Step: $index
     if (!blockOptions.indexNameTracker) {
       blockOptions.indexNameTracker = [];
     }
@@ -281,14 +281,14 @@ export const blockToAurelia = (
         const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
         needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
       } else if (BINDINGS_MAPPER[key]) {
-        str += ` ${BINDINGS_MAPPER[key]}.bind="${code}"  `;
+        str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code)}"  `;
       } else if (isValidHtmlTag || key.includes('-')) {
         // standard html elements need the attr to satisfy the compiler in many cases: eg: svg elements and [fill]
         if (json.bindings.checked) {
           // Step: Input Radio/Checkbox checked
           str += ` ${key}.bind="${rawCode}" `;
         } else {
-          // Steps: $index
+          // Step: $index
           if (blockOptions.indexNameTracker?.includes(code)) {
             str += ` ${key}.bind="$index" `;
           } else {

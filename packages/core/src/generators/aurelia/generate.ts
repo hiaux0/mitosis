@@ -312,7 +312,7 @@ export const blockToAurelia = (
             str += ` ${key}.bind="$index" `;
           } else {
             // Step: Attribute binding
-            str += ` ${key}.bind="${code}" `;
+            str += ` ${key}.bind="${indent(code)}" `;
             if (DEBUG) {
               str += '--[[Attribute1]]--';
             }

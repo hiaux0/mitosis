@@ -231,9 +231,7 @@ export const blockToAurelia = (
     }
   } else {
     // json.name; /*?*/
-    const elSelector = childComponents.find((impName) => impName === json.name)
-      ? kebabCase(json.name)
-      : json.name;
+    const elSelector = kebabCase(json.name);
 
     // Step: Opening Tag
     str += `<${elSelector}`;

@@ -84,10 +84,9 @@ const mappers: {
   [key: string]: (json: MitosisNode, options: ToAureliaOptions) => string;
 } = {
   Fragment: (json, options) => {
-    options;
-    return `<${AureliaKeywords.Tempalte}>${json.children
+    return `${json.children
       .map((item) => blockToAurelia(item, options, { callLocation: CallLocation.Fragment }))
-      .join('\n')}</${AureliaKeywords.Tempalte}>`;
+      .join('\n')}`;
   },
   Slot: (json, options) => {
     const renderChildren = () =>
@@ -158,15 +157,15 @@ export const blockToAurelia = (
   if (checkIsForNode(json)) {
     // Step: For / Step: Repeat for
     const indexName = json.scope.indexName;
-    str += `<template repeat.for="${json.scope.forName} of ${json.bindings.each?.code}${
-      indexName ? `; let ${indexName} = index` : ''
-    }">`;
+    str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${
+      json.bindings.each?.code
+    }${indexName ? `; let ${indexName} = index` : ''}">`;
     str += json.children
       .map((item) =>
         blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.For }),
       )
       .join('\n');
-    str += `</template>`;
+    str += `</${AureliaKeywords.Tempalte}>`;
   } else if (json.name === BuiltInEnums.Show) {
     str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
     str += json.children
@@ -244,7 +243,8 @@ export const blockToAurelia = (
         // Step: Class Attribute
         str += ` class="${code}" `;
       } else if (key === 'ref') {
-        str += ` #${code} `;
+        // Step: Ref
+        str += ` ref=${code} `;
       } else if (isSlotProperty(key)) {
         const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
         needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
@@ -668,7 +668,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${outputs.join('\n')}
 
       ${Array.from(domRefs)
-        .map((refName) => `@ViewChild('${refName}') ${refName}: ElementRef`)
+        .map((refName) => `${refName}: HTMLElement`)
         .join('\n')}
 
       ${dataString}

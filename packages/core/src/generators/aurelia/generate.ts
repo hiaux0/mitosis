@@ -256,8 +256,9 @@ export const blockToAurelia = (
           //   str += ` v-bind="${encodeQuotes(spreadsString)}"`;
           // } else {
           spreads.forEach((spread, _spreadIndex) => {
+            const withoutPropsPrefix = key.replace('props.', '');
             if (!spread) return;
-            if (spread !== key) return;
+            if (spread !== withoutPropsPrefix) return;
 
             const spreadIndex = spreads.length === 1 ? '' : _spreadIndex;
             str += ` spreadProps${spreadIndex}.bind="${encodeQuotes(spread)}"`;

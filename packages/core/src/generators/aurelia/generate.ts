@@ -135,7 +135,7 @@ export const blockToAurelia = (
   }
 
   if (isChildren({ node: json })) {
-    return `<ng-content></ng-content>`;
+    return `<slot></slot>`;
   }
 
   if (json.properties._text) {
@@ -145,7 +145,7 @@ export const blockToAurelia = (
   if (textCode) {
     if (isSlotProperty(textCode)) {
       const selector = pipe(textCode, stripSlotPrefix, kebabCase);
-      return `<ng-content select="[${selector}]"></ng-content>`;
+      return `<slot select="[${selector}]"></slot>`;
     }
 
     return `\${${textCode}}`;
@@ -261,7 +261,7 @@ export const blockToAurelia = (
         }
       } else {
         // Step: Attribute binding
-        str += `${key}.bind="${code}" `;
+        str += ` ${key}.bind="${code}" `;
       }
     }
     if (selfClosingTags.has(json.name)) {
@@ -610,6 +610,12 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     str += '\n';
     str += '\n';
+
+    if (json.types) {
+      str += json.types.join('\n');
+      str += '\n';
+      str += '\n';
+    }
 
     // Step: onUpdate
     /**

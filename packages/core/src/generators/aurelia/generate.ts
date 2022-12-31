@@ -476,7 +476,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
-    const [jsImports, templateImports] = aureliaImports.split(IMPORT_MARKER);
+    const [jsImports, ...templateImports] = aureliaImports.split(IMPORT_MARKER);
 
     let template = '';
 
@@ -486,7 +486,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     if (templateImports) {
-      template += templateImports;
+      template += templateImports.join('');
     }
 
     template += json.children

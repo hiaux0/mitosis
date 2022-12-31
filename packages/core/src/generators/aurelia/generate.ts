@@ -217,19 +217,22 @@ export const blockToAurelia = (
       str += ` ${key}="${value}" `;
     }
     for (const key in json.bindings) {
-      if (spreads?.length) {
-        // if (spreads.length > 1) {
-        //   let spreadsString = `{...${spreads.join(', ...')}}`;
-        //   str += ` v-bind="${encodeQuotes(spreadsString)}"`;
-        // } else {
-        spreads.forEach((spread) => {
-          if (!spread) return;
-          str += ` ${spread}.bind="${encodeQuotes(spread)}"`;
-        });
-        // }
-      }
-
       if (json.bindings[key]?.type === 'spread') {
+        let spreads = filter(json.bindings, (binding) => binding?.type === 'spread').map((value) =>
+          value?.code === 'props' ? '$props' : value?.code,
+        );
+
+        if (spreads?.length) {
+          // if (spreads.length > 1) {
+          //   let spreadsString = `{...${spreads.join(', ...')}}`;
+          //   str += ` v-bind="${encodeQuotes(spreadsString)}"`;
+          // } else {
+          spreads.forEach((spread) => {
+            if (!spread) return;
+            str += ` TODO_${spread}.bind="${encodeQuotes(spread)}"`;
+          });
+          // }
+        }
         continue;
       }
       if (key.startsWith('$')) {

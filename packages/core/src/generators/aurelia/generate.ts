@@ -792,7 +792,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${Array.from(props)
         .filter((item) => !isSlotProperty(item) && item !== 'children')
         .map((item) => {
-          const propType = propsTypeRef ? `${propsTypeRef}["${item}"]` : 'any';
+          // Step: | never
+          const finalPropsTypeRef = propsTypeRef?.includes('| never')
+            ? `(${propsTypeRef})`
+            : propsTypeRef;
+          const propType = propsTypeRef ? `${finalPropsTypeRef}["${item}"]` : 'any';
           // Step: @bindable
           let propDeclaration = `@bindable() ${item}: ${propType}`;
           if (json.defaultProps && json.defaultProps.hasOwnProperty(item)) {

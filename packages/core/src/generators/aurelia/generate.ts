@@ -78,7 +78,15 @@ enum CallLocation {
 
 interface AureliaBlockOptions {
   childComponents?: string[];
+  /**
+   * Because of recursion, this is a helper property to see where in the recursion step we are
+   */
   callLocation: CallLocation;
+  /**
+   * Aurelia does not name the index in For elements (repeat-for),
+   * thus keep track of all the indexNames, to then later replace with `$index`
+   */
+  indexNameTracker?: string[];
 }
 
 const mappers: {
@@ -123,7 +131,7 @@ const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
 export const blockToAurelia = (
   json: MitosisNode,
   options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
-  blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start },
+  blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start, indexNameTracker: [] },
 ): string => {
   // blockOptions.callLocation; /*?*/
   // json.name; /*?*/
@@ -154,18 +162,21 @@ export const blockToAurelia = (
 
   let str = '';
 
-  let spreads = filter(json.bindings, (binding) => binding?.type === 'spread').map((value) =>
-    value?.code === 'props' ? '$props' : value?.code,
-  );
-
   const needsToRenderSlots = [];
 
   if (checkIsForNode(json)) {
     // Step: For / Step: Repeat for
+    str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${json.bindings.each?.code}">`;
+
+    // Steps: $index
+    if (!blockOptions.indexNameTracker) {
+      blockOptions.indexNameTracker = [];
+    }
     const indexName = json.scope.indexName;
-    str += `<${AureliaKeywords.Tempalte} repeat.for="${json.scope.forName} of ${
-      json.bindings.each?.code
-    }${indexName ? `; let ${indexName} = index` : ''}">`;
+    if (indexName) {
+      blockOptions.indexNameTracker.push(indexName);
+    }
+
     str += json.children
       .map((item) =>
         blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.For }),
@@ -274,8 +285,13 @@ export const blockToAurelia = (
           // Step: Input Radio/Checkbox checked
           str += ` ${key}.bind="${rawCode}" `;
         } else {
-          // Step: Attribute binding
-          str += ` ${key}.bind="${code}" `;
+          // Steps: $index
+          if (blockOptions.indexNameTracker?.includes(code)) {
+            str += ` ${key}.bind="$index" `;
+          } else {
+            // Step: Attribute binding
+            str += ` ${key}.bind="${code}" `;
+          }
         }
       } else {
         // Step: Attribute binding

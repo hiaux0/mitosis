@@ -252,7 +252,7 @@ export const blockToAurelia = (
           // } else {
           spreads.forEach((spread) => {
             if (!spread) return;
-            str += ` TODO_${spread}.bind="${encodeQuotes(spread)}"`;
+            str += ` spreadProps.bind="${encodeQuotes(spread)}"`;
 
             if (DEBUG) {
               str += '--[[Spread]]--';

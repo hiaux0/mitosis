@@ -46,7 +46,7 @@ import { encodeQuotes } from '../vue/helpers';
 import { stripStateAndProps } from './helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-const DEBUG = false;
+const DEBUG = true;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -650,8 +650,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const getContextCodeResult = getContextCode(json);
     getContextCodeResult; /*?*/
 
-    let getContextCodeResultMethod;
-    let callGetContextCodeResultMethod;
+    let getContextCodeResultMethod = '';
+    let callGetContextCodeResultMethod = '';
     if (getContextCodeResult) {
       const getContextMethodName = 'getContext';
       const createGetContextCodeResultMethod = () => {
@@ -673,8 +673,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     const setContextCodeResult = setContextCode({ json, options });
 
-    let setContextCodeResultMethod;
-    let callSetContextCodeResultMethod;
+    let setContextCodeResultMethod = '';
+    let callSetContextCodeResultMethod = '';
     if (setContextCodeResult) {
       const setContextMethodName = 'setContext';
       const createSetContextCodeResultMethod = () => {

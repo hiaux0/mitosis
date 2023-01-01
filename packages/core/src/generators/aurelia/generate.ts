@@ -42,7 +42,7 @@ import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './cons
 import { encodeQuotes } from '../vue/helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-const DEBUG = true;
+const DEBUG = false;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -149,7 +149,6 @@ export const blockToAurelia = (
 ): string => {
   // blockOptions.callLocation; /*?*/
   // json.name; /*?*/
-  const childComponents = blockOptions?.childComponents || [];
   const isValidHtmlTag = VALID_HTML_TAGS.includes(json.name.trim());
 
   if (mappers[json.name]) {
@@ -499,16 +498,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     const [forwardProp, hasPropRef] = getPropsRef(json, true);
-    const childComponents: string[] = [];
     const propsTypeRef = json.propsTypeRef !== 'any' ? json.propsTypeRef : undefined;
-
-    json.imports.forEach(({ imports }) => {
-      Object.keys(imports).forEach((key) => {
-        if (imports[key] === 'default') {
-          childComponents.push(key);
-        }
-      });
-    });
 
     const injectables: string[] = contextVars.map((variableName) => {
       const variableType = json?.context?.get[variableName].name;
@@ -544,9 +534,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const hasOnMount = Boolean(json.hooks?.onMount);
     const domRefs = getRefs(json);
     const jsRefs = Object.keys(json.refs).filter((ref) => !domRefs.has(ref));
-    const componentsUsed = Array.from(getComponentsUsed(json)).filter((item) => {
-      return item.length && isUpperCase(item[0]) && !BUILT_IN_COMPONENTS.has(item);
-    });
 
     mapRefs(json, (refName) => {
       const isDomRef = domRefs.has(refName);
@@ -558,25 +545,12 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       json = runPostJsonPlugins(json, options.plugins);
       // json.children[0].children[0].bindings.checked; /*?*/
     }
-    let css = collectCss(json);
-    if (options.prettier !== false) {
-      css = tryFormat(css, 'css');
-    }
-
-    // template; /*?*/
-    let template = '';
-
-    // Step: Opening template tag V1
-    if (isAureliaV1()) {
-      template += `<${AureliaKeywords.Tempalte}>`;
-    }
-
-    if (IS_DEV) {
-      template += 'test';
-    }
 
     // Step: Import
-    const aureliaImports = renderPreComponent({
+    const componentsUsed = Array.from(getComponentsUsed(json)).filter((item) => {
+      return item.length && isUpperCase(item[0]) && !BUILT_IN_COMPONENTS.has(item);
+    });
+    const rawAureliaImports = renderPreComponent({
       component: json,
       target: 'aurelia',
       excludeMitosisComponents: !options.preserveImports,
@@ -585,15 +559,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
-    const [jsExports, ...otherMapped] = aureliaImports.split(IMPORT_MARKER);
-    const templateImports: string[] = [];
-    const jsImports: string[] = [];
-    otherMapped.forEach((mapped) => {
-      const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
-      templateImports.push(templateImport);
-      jsImports.push(jsImport);
-    });
-
+    const aureliaImports = rawAureliaImports.split(IMPORT_MARKER);
+    const [jsExports, ...otherMapped] = aureliaImports;
     const importedVars = json.imports?.flatMap((imported) => {
       /**
        * `import { Builder as AST } from '@builder.io/sdk';`
@@ -616,20 +583,16 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       // });
       return resultArray;
     });
-    importedVars; /*?*/
-    // json; /*?*/
 
-    // template; /*?*/
+    const spreadCollector: string[] = [];
+    const template = assembleTemplate(json, options, aureliaImports, spreadCollector);
+
     const customElements = importedVars.filter((variable) => {
       const nameConvention = kebabCase(variable.name);
       const used = template.includes(nameConvention); // TODO Find a more precise way to deterimne whether a var was used
       return used;
     });
 
-    const usedVars = importedVars.filter((variable) => {
-      const used = template.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
-      return used;
-    });
     /**
      * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
      * `import { Builder } from '@builder.io/sdk';`
@@ -640,109 +603,19 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const localExportVars = Object.keys(localExports).filter(
       (key) => localExports[key].usedInLocal,
     );
+    const usedVars = importedVars.filter((variable) => {
+      const used = template.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
+      return used;
+    });
     const assignImportedVars = Array.from(
-      new Set([...usedVars, ...customImports, ...localExportVars]),
+      new Set([...usedVars.map((variable) => variable.name), ...customImports, ...localExportVars]),
     );
 
-    // Step: Template imports
-    if (otherMapped) {
-      // templateImports; /*?*/
-      template += templateImports.join('');
-      if (DEBUG) {
-        template += '--[[TemplateImports]]--';
-      }
-      template += '\n';
-      template += '\n';
-    }
-
-    const spreadCollector: string[] = [];
-    template += json.children
-      .map((item) =>
-        blockToAurelia(item, options, {
-          childComponents,
-          callLocation: CallLocation.ChildrenForTemplate,
-          spreadCollector,
-        }),
-      )
-      .join('\n  ');
-
-    // Step: onUpdate
-    if (json.hooks.onUpdate) {
-      template += '${propertyObserver}';
-
-      if (DEBUG) {
-        template += '--[[onUpdate]]--';
-      }
-    }
-
-    // Step: Styles
-    if (css) {
-      template += '\n';
-      template += '\n';
-      template += '<style>';
-      template += css;
-      template += '</style>';
-      if (DEBUG) {
-        template += '--[[Styles]]--';
-      }
-    }
-
-    // Step: Closing template tag V1
-    if (isAureliaV1()) {
-      template += `</${AureliaKeywords.Tempalte}>`;
-    }
-
-    // Prettier
-    if (options.prettier !== false) {
-      template = tryFormat(template, 'html');
-    }
-
-    stripMetaProperties(json);
-
-    const dataString = getStateObjectStringFromComponent(json, {
-      format: 'class',
-      valueMapper: processAureliaCode({
-        replaceWith: 'this',
-        contextVars,
-        outputVars,
-        domRefs: Array.from(domRefs),
-        stateVars,
-      }),
+    const jsImports: string[] = [];
+    otherMapped.forEach((mapped) => {
+      const [_, jsImport] = mapped.split(MARKER_JS_MAPPED);
+      jsImports.push(jsImport);
     });
-
-    // Preparing built in component metadata parameters
-    const componentMetadata: Record<string, any> = {
-      template: indent(template),
-      ...(css.length
-        ? {
-            styles: `[\`${indent(css, 8)}\`]`,
-          }
-        : {}),
-      // ...(options.standalone
-      //   ? // TODO: also add child component imports here as well
-      //     {
-      //       standalone: 'true',
-      //       imports: `[${['CommonModule', ...componentsUsed].join(', ')}]`,
-      //     }
-      //   : {}),
-    };
-    // Taking into consideration what user has passed in options and allowing them to override the default generated metadata
-    Object.entries(json.meta.aureliaConfig || {}).forEach(([key, value]) => {
-      componentMetadata[key] = value;
-    });
-
-    const getPropsDefinition = ({ json }: { json: MitosisComponent }) => {
-      if (!json.defaultProps) return '';
-      const defalutPropsString = Object.keys(json.defaultProps)
-        .map((prop) => {
-          const value = json.defaultProps!.hasOwnProperty(prop)
-            ? json.defaultProps![prop]?.code
-            : '{}';
-          return `${prop}: ${value}`;
-        })
-        .join(',');
-      return `const defaultProps = {${defalutPropsString}};\n`;
-    };
 
     const finalTemplate = indent(template, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
     // const finalTemplate = template;
@@ -754,6 +627,17 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     // } Component ${domRefs.size ? ', ViewChild, ElementRef' : ''}${
     //   props.size ? ', Input' : ''
     // } } from '@aurelia/core';
+    const dataString = getStateObjectStringFromComponent(json, {
+      format: 'class',
+      valueMapper: processAureliaCode({
+        replaceWith: 'this',
+        contextVars,
+        outputVars,
+        domRefs: Array.from(domRefs),
+        stateVars,
+      }),
+    });
+
     let str = '';
 
     // Step: Imports
@@ -807,6 +691,19 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       str += '\n';
       str += '\n';
     }
+
+    const getPropsDefinition = ({ json }: { json: MitosisComponent }) => {
+      if (!json.defaultProps) return '';
+      const defalutPropsString = Object.keys(json.defaultProps)
+        .map((prop) => {
+          const value = json.defaultProps!.hasOwnProperty(prop)
+            ? json.defaultProps![prop]?.code
+            : '{}';
+          return `${prop}: ${value}`;
+        })
+        .join(',');
+      return `const defaultProps = {${defalutPropsString}};\n`;
+    };
 
     // Step: defaultProps
     const defaultProps = getPropsDefinition({ json });
@@ -873,6 +770,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${DEBUG ? '// --[[@bindable]]--' : ''}
 
       ${assignImportedVars.map((name) => `${name} = ${name}`).join('\n')}
+
       ${DEBUG ? '// --[[ViewModelImport]]--' : ''}
 
       ${outputs.join('\n')}
@@ -955,10 +853,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     return str;
-
-    function isAureliaV1() {
-      return options.aureliaVersion === AureliaV1;
-    }
   };
 
 const tryFormat = (str: string, parser: string) => {
@@ -979,3 +873,128 @@ const tryFormat = (str: string, parser: string) => {
   }
   return str;
 };
+
+function assembleTemplate(
+  json: MitosisComponent,
+  options: ToAureliaOptions,
+  aureliaImports: string[],
+  spreadCollector: string[],
+): string {
+  const [, ...otherMapped] = aureliaImports;
+  const templateImports: string[] = [];
+  otherMapped.forEach((mapped) => {
+    const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
+    templateImports.push(templateImport);
+  });
+
+  const childComponents: string[] = [];
+  json.imports.forEach(({ imports }) => {
+    Object.keys(imports).forEach((key) => {
+      if (imports[key] === 'default') {
+        childComponents.push(key);
+      }
+    });
+  });
+  let css = collectCss(json);
+  if (options.prettier !== false) {
+    css = tryFormat(css, 'css');
+  }
+
+  // template; /*?*/
+  let template = '';
+
+  // Step: Opening template tag V1
+  if (isAureliaV1()) {
+    template += `<${AureliaKeywords.Tempalte}>`;
+  }
+
+  if (IS_DEV) {
+    template += 'test';
+  }
+
+  // Step: Import
+
+  // json; /*?*/
+
+  // template; /*?*/
+
+  // Step: Template imports
+  if (otherMapped) {
+    template += templateImports.join('');
+    if (DEBUG) {
+      template += '--[[TemplateImports]]--';
+    }
+    template += '\n';
+    template += '\n';
+  }
+
+  template += json.children
+    .map((item) =>
+      blockToAurelia(item, options, {
+        childComponents,
+        callLocation: CallLocation.ChildrenForTemplate,
+        spreadCollector,
+      }),
+    )
+    .join('\n  ');
+
+  // Step: onUpdate
+  if (json.hooks.onUpdate) {
+    template += '${propertyObserver}';
+
+    if (DEBUG) {
+      template += '--[[onUpdate]]--';
+    }
+  }
+
+  // Step: Styles
+  if (css) {
+    template += '\n';
+    template += '\n';
+    template += '<style>';
+    template += css;
+    template += '</style>';
+    if (DEBUG) {
+      template += '--[[Styles]]--';
+    }
+  }
+
+  // Step: Closing template tag V1
+  if (isAureliaV1()) {
+    template += `</${AureliaKeywords.Tempalte}>`;
+  }
+
+  // Prettier
+  if (options.prettier !== false) {
+    template = tryFormat(template, 'html');
+  }
+
+  stripMetaProperties(json);
+
+  // Preparing built in component metadata parameters
+  const componentMetadata: Record<string, any> = {
+    template: indent(template),
+    ...(css.length
+      ? {
+          styles: `[\`${indent(css, 8)}\`]`,
+        }
+      : {}),
+    // ...(options.standalone
+    //   ? // TODO: also add child component imports here as well
+    //     {
+    //       standalone: 'true',
+    //       imports: `[${['CommonModule', ...componentsUsed].join(', ')}]`,
+    //     }
+    //   : {}),
+  };
+  // Taking into consideration what user has passed in options and allowing them to override the default generated metadata
+  Object.entries(json.meta.aureliaConfig || {}).forEach(([key, value]) => {
+    componentMetadata[key] = value;
+  });
+
+  return template;
+
+  function isAureliaV1() {
+    return options.aureliaVersion === AureliaV1;
+  }
+}

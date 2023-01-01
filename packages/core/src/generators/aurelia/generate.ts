@@ -87,6 +87,8 @@ interface AureliaBlockOptions {
    * thus keep track of all the indexNames, to then later replace with `$index`
    */
   indexNameTracker?: string[];
+  /** Aurelia needs to explicitly set the eg. React props as @bindable */
+  spreadCollector?: string[];
 }
 
 const mappers: {
@@ -139,7 +141,11 @@ const BINDINGS_MAPPER: { [key: string]: string | undefined } = {
 export const blockToAurelia = (
   json: MitosisNode,
   options: ToAureliaOptions = DEFAULT_AURELIA_OPTIONS,
-  blockOptions: AureliaBlockOptions = { callLocation: CallLocation.Start, indexNameTracker: [] },
+  blockOptions: AureliaBlockOptions = {
+    callLocation: CallLocation.Start,
+    indexNameTracker: [],
+    spreadCollector: [],
+  },
 ): string => {
   // blockOptions.callLocation; /*?*/
   // json.name; /*?*/
@@ -259,6 +265,11 @@ export const blockToAurelia = (
             const withoutPropsPrefix = key.replace('props.', '');
             if (!spread) return;
             if (spread !== withoutPropsPrefix) return;
+
+            if (!blockOptions.spreadCollector) {
+              blockOptions.spreadCollector = [];
+            }
+            blockOptions.spreadCollector.push(spread);
 
             const spreadIndex = spreads.length === 1 ? '' : _spreadIndex;
             str += ` spreadProps${spreadIndex}.bind="${encodeQuotes(spread)}"`;
@@ -593,11 +604,13 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += '\n';
     }
 
+    const spreadCollector: string[] = [];
     template += json.children
       .map((item) =>
         blockToAurelia(item, options, {
           childComponents,
           callLocation: CallLocation.ChildrenForTemplate,
+          spreadCollector,
         }),
       )
       .join('\n  ');
@@ -813,10 +826,12 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       new Set([...usedVars, ...customImports, ...localExportVars]),
     );
 
+    const finalProps = new Set([...Array.from(props), ...spreadCollector]);
+
     // Step: Class
     str += dedent`
     export class ${json.name} {
-      ${Array.from(props)
+      ${Array.from(finalProps)
         .filter((item) => !isSlotProperty(item) && item !== 'children')
         .map((item) => {
           // Step: | never

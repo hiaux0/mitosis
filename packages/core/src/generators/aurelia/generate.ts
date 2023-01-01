@@ -45,8 +45,13 @@ import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './cons
 import { encodeQuotes } from '../vue/helpers';
 import { stripStateAndProps } from './helpers';
 
+interface ImportData {
+  name: string;
+  path: string;
+}
+
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-const DEBUG = true;
+const DEBUG = false;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -588,12 +593,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     const spreadCollector: string[] = [];
-    const template = assembleTemplate(json, options, aureliaImports, spreadCollector);
-
-    const customElements = importedVars.filter((variable) => {
+    const templateBody = assembleTemplate(json, options, aureliaImports, spreadCollector);
+    const customElementsImports = importedVars.filter((variable) => {
       const nameConvention = kebabCase(variable.name);
       const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
-      const used = template.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
+      const used = templateBody.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
       return used;
     });
 
@@ -607,17 +611,25 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const localExportVars = Object.keys(localExports).filter(
       (key) => localExports[key].usedInLocal,
     );
-    const usedVars = importedVars.filter((variable) => {
-      const used = template.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
+    const usedAsClassVars = importedVars.filter((variable) => {
+      const usedInTemplate = templateBody.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
+      const usedAsClassVar = customElementsImports.includes(variable);
+      const used = usedInTemplate && !usedAsClassVar;
       return used;
     });
     const assignImportedVars = Array.from(
-      new Set([...usedVars.map((variable) => variable.name), ...customImports, ...localExportVars]),
+      new Set([
+        ...usedAsClassVars.map((variable) => variable.name),
+        ...customImports,
+        ...localExportVars,
+      ]),
     ).filter((importedVar) => {
-      const isCustomElement = customElements.find((element) => element.name === importedVar);
+      const isCustomElement = customElementsImports.find((element) => element.name === importedVar);
       const dontAssignWhenCustomElement = !isCustomElement;
       return dontAssignWhenCustomElement;
     });
+    const templateImports = assembleTemplateImports(aureliaImports, customElementsImports);
+
     // assignImportedVars; /*?*/
 
     const jsImports: string[] = [];
@@ -626,7 +638,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       jsImports.push(jsImport);
     });
 
-    const finalTemplate = indent(template, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+    const finalTemplate = indent(templateBody, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
     // const finalTemplate = template;
     // const finalTemplate = indent(template, 6);
     // finalTemplate; /*?*/
@@ -959,6 +971,31 @@ const tryFormat = (str: string, parser: string) => {
   }
   return str;
 };
+
+function assembleTemplateImports(aureliaImports: string[], customElementsImports: ImportData[]) {
+  const [, ...otherMapped] = aureliaImports;
+  const templateImports = customElementsImports.map((imported) => imported.path);
+  templateImports; /*?*/
+  // const templateImports: string[] = [];
+  // otherMapped.forEach((mapped) => {
+  //   const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
+  //   templateImports.push(templateImport);
+  // });
+
+  let template = '';
+
+  // Step: Template imports
+  if (otherMapped) {
+    template += templateImports.join('');
+    if (DEBUG) {
+      template += '--[[TemplateImports]]--';
+    }
+    template += '\n';
+    template += '\n';
+  }
+
+  return template;
+}
 
 function assembleTemplate(
   json: MitosisComponent,

@@ -514,7 +514,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       }
       return `public ${variableName} : ${variableType}`;
     });
-    const hasConstructor = Boolean(injectables.length || json.hooks?.onInit);
 
     const props = getProps(json);
     // prevent jsx props from showing up as @Input
@@ -652,7 +651,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const setContextCodeResult = setContextCode({ json, options });
     const shouldAddAutoinjectImport = !!setContextCodeResult;
     const shouldAddEventAggregatorImport = !!setContextCodeResult;
-    const shouldAddConstructor = !!setContextCodeResult;
+
+    const hasConstructor = Boolean(injectables.length || json.hooks?.onInit);
+    const shouldAddConstructor = hasConstructor || !!setContextCodeResult;
 
     let str = '';
 
@@ -850,13 +851,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
         .join('\n')}
 
       ${
-        !hasConstructor
-          ? shouldAddConstructor
-            ? `constructor(
-              ${shouldAddEventAggregatorImport ? 'private eventAggregator: EventAggregator,' : ''}
-            ) {}`
-            : ''
-          : `constructor(\n${injectables.join(',\n')}) {
+        shouldAddConstructor
+          ? `constructor(
+            ${shouldAddEventAggregatorImport ? 'private eventAggregator: EventAggregator,' : ''}
+            ${injectables.join(',\n')}
+            ) {
             ${
               !json.hooks?.onInit
                 ? ''
@@ -866,6 +865,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
             }
           }
           `
+          : ''
       }
 
       ${

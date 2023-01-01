@@ -589,7 +589,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     const customElements = importedVars.filter((variable) => {
       const nameConvention = kebabCase(variable.name);
-      const used = template.includes(nameConvention); // TODO Find a more precise way to deterimne whether a var was used
+      const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
+      const used = template.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
       return used;
     });
 
@@ -610,10 +611,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const assignImportedVars = Array.from(
       new Set([...usedVars.map((variable) => variable.name), ...customImports, ...localExportVars]),
     ).filter((importedVar) => {
-      const isCustomElement = customElements.find((element) => element.name === importedVar); /*?*/
+      const isCustomElement = customElements.find((element) => element.name === importedVar);
       const dontAssignWhenCustomElement = !isCustomElement;
       return dontAssignWhenCustomElement;
     });
+    // assignImportedVars; /*?*/
 
     const jsImports: string[] = [];
     otherMapped.forEach((mapped) => {

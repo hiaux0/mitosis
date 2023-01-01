@@ -648,12 +648,61 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     const getContextCodeResult = getContextCode(json);
+    getContextCodeResult; /*?*/
+
+    let getContextCodeResultMethod;
+    let callGetContextCodeResultMethod;
+    if (getContextCodeResult) {
+      const getContextMethodName = 'getContext';
+      const createGetContextCodeResultMethod = () => {
+        const result = `
+        ${getContextMethodName}() {
+          ${getContextCodeResult}
+        }
+        ${DEBUG ? '// --[[getContentMethod]]--' : ''}
+        `;
+        return result;
+      };
+      getContextCodeResultMethod = createGetContextCodeResultMethod();
+
+      callGetContextCodeResultMethod = `
+        this.${getContextMethodName}();
+        ${DEBUG ? '// --[[callGetContextCodeResultMethod]]--' : ''}
+      `;
+    }
+
     const setContextCodeResult = setContextCode({ json, options });
+
+    let setContextCodeResultMethod;
+    let callSetContextCodeResultMethod;
+    if (setContextCodeResult) {
+      const setContextMethodName = 'setContext';
+      const createSetContextCodeResultMethod = () => {
+        const result = `
+        ${setContextMethodName}() {
+          ${setContextCodeResult}
+        }
+        ${DEBUG ? '// --[[setContentMethod]]--' : ''}
+
+        `;
+        return result;
+      };
+      setContextCodeResultMethod = createSetContextCodeResultMethod();
+
+      callSetContextCodeResultMethod = `
+        this.${setContextMethodName}();
+        ${DEBUG ? '// --[[callSetContextCodeResultMethod]]--' : ''}
+      `;
+    }
+
     const shouldAddAutoinjectImport = !!setContextCodeResult;
     const shouldAddEventAggregatorImport = !!setContextCodeResult;
 
     const hasConstructor = Boolean(injectables.length || json.hooks?.onInit);
     const shouldAddConstructor = hasConstructor || !!setContextCodeResult;
+
+    const shouldAddAttached =
+      hasConstructor || !!callSetContextCodeResultMethod || !!callGetContextCodeResultMethod;
 
     let str = '';
 
@@ -776,28 +825,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     const finalProps = new Set([...Array.from(props), ...spreadCollector]);
 
-    let setContextCodeResultMethod;
-    let callSetContextCodeResultMethod;
-    if (setContextCodeResult) {
-      const setContextMethodName = 'setContext';
-      const createSetContextCodeResultMethod = () => {
-        const result = `
-        ${setContextMethodName}() {
-          ${setContextCodeResult}
-        }
-        ${DEBUG ? '// --[[setContentMethod]]--' : ''}
-
-        `;
-        return result;
-      };
-      setContextCodeResultMethod = createSetContextCodeResultMethod();
-
-      callSetContextCodeResultMethod = `
-        this.${setContextMethodName}();
-        ${DEBUG ? '// --[[callSetContextCodeResultMethod]]--' : ''}
-      `;
-    }
-
     // Step: Class
     str += dedent`
     export class ${json.name} {
@@ -869,23 +896,20 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       }
 
       ${
-        !hasOnMount
-          ? callSetContextCodeResultMethod
-            ? `attached() {
-              ${callSetContextCodeResultMethod}
-              }`
-            : ''
-          : `attached() {
+        shouldAddAttached
+          ? `attached() {
               ${
                 !json.hooks?.onMount
                   ? ''
                   : `
                 ${json.hooks.onMount?.code}
-
-                ${callSetContextCodeResultMethod ? callSetContextCodeResultMethod : ''}
                 `
               }
+
+              ${callGetContextCodeResultMethod}
+              ${callSetContextCodeResultMethod}
             }`
+          : ''
       }
 
       ${onUpdateCode}
@@ -898,8 +922,9 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
             }`
       }
 
-      ${setContextCodeResultMethod}
+      ${getContextCodeResultMethod}
 
+      ${setContextCodeResultMethod}
     }
   `;
 
@@ -1064,7 +1089,10 @@ function getContextCode(json: MitosisComponent) {
     .map(([key, context]): string => {
       const { name } = context;
 
-      return `let ${key} = getContext(${name}.key);`;
+      return `
+      this.eventAggregator.subscribe(${name}.key, (payload) => {
+        this.${key} = payload;
+      });`;
     })
     .join('\n');
 }

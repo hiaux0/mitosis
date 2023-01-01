@@ -318,7 +318,7 @@ export const blockToAurelia = (
         // json.bindings.checked; /*?*/
         if (isRadioOrCheckbox()) {
           // Step: Event attribute
-          str += ` ${event}.delegate="${indent(finalValue)}" `;
+          str += ` ${event}.delegate="${indent(finalValue)}()" `;
 
           if (DEBUG) {
             str += '--[[.delegate]]--';

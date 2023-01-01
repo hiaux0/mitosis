@@ -1,0 +1,2372 @@
+// Vitest Snapshot v1
+
+exports[`Aurelia > jsx > Typescript Test > Basic 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+export const DEFAULT_VALUES = {
+  name: \\"Steve\\",
+};
+
+export interface MyBasicComponentProps {
+  id: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"test div\\">
+      <input
+        value.bind=\\"DEFAULT_VALUES.name || name\\"
+        input.delegate=\\"name = $event.target.value\\"
+      />
+
+      Hello! I can run in React, Vue, Solid, or Liquid!
+    </div>
+
+    <style>
+      .div {
+        padding: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicComponent {
+  DEFAULT_VALUES = DEFAULT_VALUES;
+
+  name = \\"Steve\\";
+  underscore_fn_name() {
+    return \\"bar\\";
+  }
+  age = 1;
+  sports = [\\"\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Basic Context 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+import { Injector, createInjector, MyService } from \\"@dummy/injection-js\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@dummy/injection-js\\"></require>
+
+    <div>
+      \\\\\${myService.method('hello') + name} Hello! I can run in React, Vue, Solid,
+      or Liquid!
+
+      <input input.delegate=\\"onChange\\" />
+    </div>
+  </template>
+\`)
+export class MyBasicComponent {
+  name = \\"PatrickJS\\";
+  onChange = function onChange() {
+    const change = this.myService.method(\\"change\\");
+    console.log(change);
+  };
+
+  constructor(public myService: MyService) {
+    const hi = this.myService.method(\\"hi\\");
+    console.log(hi);
+  }
+
+  attached() {
+    const bye = this.myService.method(\\"hi\\");
+    console.log(bye);
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Basic OnMount Update 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface Props {
+  hi: string;
+  bye: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello \\\\\${name}</div>
+  </template>
+\`)
+export class MyBasicOnMountUpdateComponent {
+  @bindable() hi: Props[\\"hi\\"];
+  @bindable() bye: Props[\\"bye\\"];
+
+  name = \\"PatrickJS\\";
+  names = [\\"Steve\\", \\"PatrickJS\\"];
+
+  constructor() {
+    this.name = \\"PatrickJS onInit\\" + this.hi;
+  }
+
+  attached() {
+    this.name = \\"PatrickJS onMount\\" + this.bye;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Basic Outputs 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+  </template>
+\`)
+export class MyBasicOutputsComponent {
+  @bindable() onMessage: any;
+  @bindable() onEvent: any;
+  @bindable() message: any;
+
+  name = \\"PatrickJS\\";
+
+  attached() {
+    this.onMessage(this.name);
+    this.onEvent(this.message);
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Basic Outputs Meta 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+  </template>
+\`)
+export class MyBasicOutputsComponent {
+  @bindable() onMessage: any;
+  @bindable() onEvent: any;
+  @bindable() message: any;
+
+  name = \\"PatrickJS\\";
+
+  attached() {
+    this.onMessage(this.name);
+    this.onEvent(this.message);
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicAttribute 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input autocapitalize=\\"on\\" autocomplete=\\"on\\" spellcheck.bind=\\"true\\" />
+  </template>
+\`)
+export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicBooleanAttribute 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import MyBooleanAttributeComponent from \\"./basic-boolean-attribute-component.raw\\";
+
+type Props = {
+  children: any;
+  type: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"./basic-boolean-attribute-component.raw\\"></require>
+
+    <div>
+      <slot></slot>
+
+      \\\\\${type}
+
+      <my-boolean-attribute-component
+        toggle.bind=\\"true\\"
+      ></my-boolean-attribute-component>
+
+      <my-boolean-attribute-component
+        toggle.bind=\\"true\\"
+      ></my-boolean-attribute-component>
+
+      <my-boolean-attribute-component
+        list.bind=\\"null\\"
+      ></my-boolean-attribute-component>
+    </div>
+  </template>
+\`)
+export class MyBooleanAttribute {
+  @bindable() type: Props[\\"type\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicChildComponent 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+import MyBasicComponent from \\"./basic.raw\\";
+import MyBasicOnMountUpdateComponent from \\"./basic-onMount-update.raw\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"./basic.raw\\"></require>
+    <require from=\\"./basic-onMount-update.raw\\"></require>
+
+    <div>
+      <my-basic-component id.bind=\\"dev\\"></my-basic-component>
+
+      <div>
+        <my-basic-on-mount-update-component
+          hi.bind=\\"name\\"
+          bye.bind=\\"dev\\"
+        ></my-basic-on-mount-update-component>
+      </div>
+    </div>
+  </template>
+\`)
+export class MyBasicChildComponent {
+  name = \\"Steve\\";
+  dev = \\"PatrickJS\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicFor 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template repeat.for=\\"person of names\\">
+        <input
+          value.bind=\\"name\\"
+          input.delegate=\\"
+        name = $event.target.value + ' and ' + person;
+  \\"
+        />
+
+        Hello \\\\\${person} ! I can run in Qwik, Web Component, React, Vue, Solid, or
+        Liquid!
+      </template>
+    </div>
+  </template>
+\`)
+export class MyBasicForComponent {
+  name = \\"PatrickJS\\";
+  names = [\\"Steve\\", \\"PatrickJS\\"];
+
+  attached() {
+    console.log(\\"onMount code\\");
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicRef 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface Props {
+  showInput: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template if.bind=\\"showInput\\">
+        <input
+          class=\\"input\\"
+          ref=\\"inputRef\\"
+          value.bind=\\"name\\"
+          blur.delegate=\\"onBlur()\\"
+          input.delegate=\\"name = $event.target.value\\"
+        />
+
+        <label for=\\"cars\\" ref=\\"inputNoArgRef\\">Choose a car:</label>
+
+        <select name=\\"cars\\" id=\\"cars\\">
+          <option value=\\"supra\\">GR Supra</option>
+
+          <option value=\\"86\\">GR 86</option>
+        </select>
+      </template>
+
+      Hello \\\\\${lowerCaseName()} ! I can run in React, Qwik, Vue, Solid, or Web
+      Component!
+    </div>
+
+    <style>
+      .input {
+        color: red;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicRefComponent {
+  @bindable() showInput: Props[\\"showInput\\"];
+
+  inputRef: HTMLElement;
+  inputNoArgRef: HTMLElement;
+
+  name = \\"PatrickJS\\";
+  onBlur = function onBlur() {
+    // Maintain focus
+    this.inputRef.focus();
+  };
+  lowerCaseName = function lowerCaseName() {
+    return this.name.toLowerCase();
+  };
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicRefAssignment 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface Props {
+  showInput: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <button click.delegate=\\"handlerClick($event)\\">Click</button>
+    </div>
+  </template>
+\`)
+export class MyBasicRefAssignmentComponent {
+  handlerClick = function handlerClick(event) {
+    event.preventDefault();
+    console.log(\\"current value\\", this._holdValueRef);
+    this._holdValueRef = this._holdValueRef + \\"JS\\";
+  };
+
+  private _holdValueRef = \\"Patrick\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > BasicRefPrevious 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+export function usePrevious<T>(value: T) {
+  // The ref object is a generic container whose current property is mutable ...
+  // ... and can hold any value, similar to an instance property on a class
+  let ref = useRef<T>(null); // Store current value in ref
+
+  onUpdate(() => {
+    ref = value;
+  }, [value]); // Only re-run if value changes
+  // Return previous value (happens before update in useEffect above)
+
+  return ref;
+}
+
+export interface Props {
+  showInput: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <h-1>Now: \\\\\${count} , before: \\\\\${this._prevCount}</h-1>
+
+      <button click.delegate=\\"count += 1\\">Increment</button>
+    </div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class MyPreviousComponent {
+  count = 0;
+
+  private _prevCount = this.count;
+
+  @computedFrom()
+  get propertyObserver() {
+    this._prevCount = this.count;
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Button 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface ButtonProps {
+  attributes?: any;
+  text?: string;
+  link?: string;
+  openLinkInNewTab?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template if.bind=\\"link\\">
+        <a
+          spreadProps.bind=\\"attributes\\"
+          href.bind=\\"link\\"
+          target.bind=\\"openLinkInNewTab ? '_blank' : undefined\\"
+        >
+          \\\\\${text}
+        </a>
+      </template>
+
+      <template if.bind=\\"!link\\">
+        <button type=\\"button\\" spreadProps.bind=\\"attributes\\">\\\\\${text}</button>
+      </template>
+    </div>
+  </template>
+\`)
+export class Button {
+  @bindable() link: ButtonProps[\\"link\\"];
+  @bindable() attributes: ButtonProps[\\"attributes\\"];
+  @bindable() openLinkInNewTab: ButtonProps[\\"openLinkInNewTab\\"];
+  @bindable() text: ButtonProps[\\"text\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Columns 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+type Column = {
+  content: any; // TODO: Implement this when support for dynamic CSS lands
+
+  width?: number;
+};
+export interface ColumnProps {
+  columns?: Column[]; // TODO: Implement this when support for dynamic CSS lands
+
+  space?: number; // TODO: Implement this when support for dynamic CSS lands
+
+  stackColumnsAt?: \\"tablet\\" | \\"mobile\\" | \\"never\\"; // TODO: Implement this when support for dynamic CSS lands
+
+  reverseColumnsWhenStacked?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"builder-columns div\\">
+      <template repeat.for=\\"column of columns\\">
+        <div class=\\"builder-column div-2\\">\\\\\${column.content} \\\\\${$index}</div>
+      </template>
+    </div>
+
+    <style>
+      .div {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        line-height: normal;
+      }
+      @media (max-width: 999px) {
+        .div {
+          flex-direction: row;
+        }
+      }
+      @media (max-width: 639px) {
+        .div {
+          flex-direction: row-reverse;
+        }
+      }
+      .div-2 {
+        flex-grow: 1;
+      }
+    </style>
+  </template>
+\`)
+export class Column {
+  @bindable() columns: ColumnProps[\\"columns\\"];
+  @bindable() space: ColumnProps[\\"space\\"];
+
+  getColumns() {
+    return this.columns || [];
+  }
+  getGutterSize() {
+    return typeof this.space === \\"number\\" ? this.space || 0 : 20;
+  }
+  getWidth(index) {
+    const columns = this.getColumns();
+    return (columns[index] && columns[index].width) || 100 / columns.length;
+  }
+  getColumnCssWidth(index) {
+    const columns = this.getColumns();
+    const gutterSize = this.getGutterSize();
+    const subtractWidth = (gutterSize * (columns.length - 1)) / columns.length;
+    return \`calc(\${this.getWidth(index)}% - \${subtractWidth}px)\`;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > CustomCode 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface CustomCodeProps {
+  code: string;
+  replaceNodes?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div
+      ref=\\"elem\\"
+      class=\\"\\\\\${'builder-custom-code' + (replaceNodes ? ' replace-nodes' : '')}\\"
+      innerHTML.bind=\\"code\\"
+    ></div>
+  </template>
+\`)
+export class CustomCode {
+  @bindable() replaceNodes: CustomCodeProps[\\"replaceNodes\\"];
+  @bindable() code: CustomCodeProps[\\"code\\"];
+
+  elem: HTMLElement;
+
+  scriptsInserted = [];
+  scriptsRun = [];
+  findAndRunScripts() {
+    // TODO: Move this function to standalone one in '@builder.io/utils'
+    if (this.elem && typeof window !== \\"undefined\\") {
+      /** @type {HTMLScriptElement[]} */
+      const scripts = this.elem.getElementsByTagName(\\"script\\");
+
+      for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i];
+
+        if (script.src) {
+          if (this.scriptsInserted.includes(script.src)) {
+            continue;
+          }
+
+          this.scriptsInserted.push(script.src);
+          const newScript = document.createElement(\\"script\\");
+          newScript.async = true;
+          newScript.src = script.src;
+          document.head.appendChild(newScript);
+        } else if (
+          !script.type ||
+          [
+            \\"text/javascript\\",
+            \\"application/javascript\\",
+            \\"application/ecmascript\\",
+          ].includes(script.type)
+        ) {
+          if (this.scriptsRun.includes(script.innerText)) {
+            continue;
+          }
+
+          try {
+            this.scriptsRun.push(script.innerText);
+            new Function(script.innerText)();
+          } catch (error) {
+            console.warn(\\"\`CustomCode\`: Error running script:\\", error);
+          }
+        }
+      }
+    }
+  }
+
+  attached() {
+    this.findAndRunScripts();
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Embed 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface CustomCodeProps {
+  code: string;
+  replaceNodes?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div
+      ref=\\"elem\\"
+      class=\\"\\\\\${'builder-custom-code' + (replaceNodes ? ' replace-nodes' : '')}\\"
+      innerHTML.bind=\\"code\\"
+    ></div>
+  </template>
+\`)
+export class CustomCode {
+  @bindable() replaceNodes: CustomCodeProps[\\"replaceNodes\\"];
+  @bindable() code: CustomCodeProps[\\"code\\"];
+
+  elem: HTMLElement;
+
+  scriptsInserted = [];
+  scriptsRun = [];
+  findAndRunScripts() {
+    // TODO: Move this function to standalone one in '@builder.io/utils'
+    if (this.elem && typeof window !== \\"undefined\\") {
+      /** @type {HTMLScriptElement[]} */
+      const scripts = this.elem.getElementsByTagName(\\"script\\");
+
+      for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i];
+
+        if (script.src) {
+          if (this.scriptsInserted.includes(script.src)) {
+            continue;
+          }
+
+          this.scriptsInserted.push(script.src);
+          const newScript = document.createElement(\\"script\\");
+          newScript.async = true;
+          newScript.src = script.src;
+          document.head.appendChild(newScript);
+        } else if (
+          !script.type ||
+          [
+            \\"text/javascript\\",
+            \\"application/javascript\\",
+            \\"application/ecmascript\\",
+          ].includes(script.type)
+        ) {
+          if (this.scriptsRun.includes(script.innerText)) {
+            continue;
+          }
+
+          try {
+            this.scriptsRun.push(script.innerText);
+            new Function(script.innerText)();
+          } catch (error) {
+            console.warn(\\"\`CustomCode\`: Error running script:\\", error);
+          }
+        }
+      }
+    }
+  }
+
+  attached() {
+    this.findAndRunScripts();
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Image 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+// TODO: AMP Support?
+export interface ImageProps {
+  _class?: string;
+  image: string;
+  sizes?: string;
+  lazy?: boolean;
+  height?: number;
+  width?: number;
+  altText?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string; // TODO: Support generating Builder.io and or Shopify \`srcset\`s when needed
+
+  srcset?: string; // TODO: Implement support for custom aspect ratios
+
+  aspectRatio?: number; // TODO: This might not work as expected in terms of positioning
+
+  children?: any;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <picture ref=\\"pictureRef\\">
+        <template if.bind=\\"!useLazyLoading() || load\\">
+          <img
+            alt.bind=\\"altText\\"
+            aria-role.bind=\\"altText ? 'presentation' : undefined\\"
+            class=\\"\\\\\${'builder-image' + (_class ? ' ' + _class : '') + ' img'}\\"
+            src.bind=\\"image\\"
+            load.delegate=\\"setLoaded()\\"
+            srcset.bind=\\"srcset\\"
+            sizes.bind=\\"sizes\\"
+          />
+        </template>
+
+        <source srcset.bind=\\"srcset\\" />
+      </picture>
+
+      <slot></slot>
+    </div>
+
+    <style>
+      .img {
+        opacity: 1;
+        transition: opacity 0.2s ease-in-out;
+        object-fit: cover;
+        object-position: center;
+      }
+    </style>
+  </template>
+\`)
+export class Image {
+  @bindable() lazy: ImageProps[\\"lazy\\"];
+  @bindable() altText: ImageProps[\\"altText\\"];
+  @bindable() _class: ImageProps[\\"_class\\"];
+  @bindable() image: ImageProps[\\"image\\"];
+  @bindable() srcset: ImageProps[\\"srcset\\"];
+  @bindable() sizes: ImageProps[\\"sizes\\"];
+
+  pictureRef: HTMLElement;
+
+  scrollListener = null;
+  imageLoaded = false;
+  setLoaded() {
+    this.imageLoaded = true;
+  }
+  useLazyLoading() {
+    // TODO: Add more checks here, like testing for real web browsers
+    return !!this.lazy && this.isBrowser();
+  }
+  isBrowser = function isBrowser() {
+    return (
+      typeof window !== \\"undefined\\" && window.navigator.product != \\"ReactNative\\"
+    );
+  };
+  load = false;
+
+  attached() {
+    if (this.useLazyLoading()) {
+      // throttled scroll capture listener
+      const listener = () => {
+        if (this.pictureRef) {
+          const rect = this.pictureRef.getBoundingClientRect();
+          const buffer = window.innerHeight / 2;
+
+          if (rect.top < window.innerHeight + buffer) {
+            setLoad(true);
+            this.scrollListener = null;
+            window.removeEventListener(\\"scroll\\", listener);
+          }
+        }
+      };
+
+      this.scrollListener = listener;
+      window.addEventListener(\\"scroll\\", listener, {
+        capture: true,
+        passive: true,
+      });
+      listener();
+    }
+  }
+
+  detached() {
+    if (this.scrollListener) {
+      window.removeEventListener(\\"scroll\\", this.scrollListener);
+    }
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Image State 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template repeat.for=\\"item of images\\">
+        <img class=\\"custom-class\\" src.bind=\\"item\\" key.bind=\\"$index\\" />
+      </template>
+    </div>
+  </template>
+\`)
+export class ImgStateComponent {
+  canShow = true;
+  images = [\\"http://example.com/qwik.png\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Img 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import { Builder } from \\"@builder.io/sdk\\";
+
+export interface ImgProps {
+  attributes?: any;
+  imgSrc?: string;
+  altText?: string;
+  backgroundSize?: \\"cover\\" | \\"contain\\";
+  backgroundPosition?:
+    | \\"center\\"
+    | \\"top\\"
+    | \\"left\\"
+    | \\"right\\"
+    | \\"bottom\\"
+    | \\"top left\\"
+    | \\"top right\\"
+    | \\"bottom left\\"
+    | \\"bottom right\\";
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@builder.io/sdk\\"></require>
+
+    <img
+      style.bind=\\"{
+        objectFit: backgroundSize || 'cover',
+        objectPosition: backgroundPosition || 'center'
+      }\\"
+      spreadProps.bind=\\"attributes\\"
+      key.bind=\\"Builder.isEditing && imgSrc || 'default-key'\\"
+      alt.bind=\\"altText\\"
+      src.bind=\\"imgSrc\\"
+    />
+  </template>
+\`)
+export class ImgComponent {
+  @bindable() backgroundSize: ImgProps[\\"backgroundSize\\"];
+  @bindable() backgroundPosition: ImgProps[\\"backgroundPosition\\"];
+  @bindable() attributes: ImgProps[\\"attributes\\"];
+  @bindable() imgSrc: ImgProps[\\"imgSrc\\"];
+  @bindable() altText: ImgProps[\\"altText\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Input 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import { Builder } from \\"@builder.io/sdk\\";
+
+export interface FormInputProps {
+  type?: string;
+  attributes?: any;
+  name?: string;
+  value?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  required?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@builder.io/sdk\\"></require>
+
+    <input
+      spreadProps.bind=\\"attributes\\"
+      key.bind=\\"Builder.isEditing && defaultValue ? defaultValue : 'default-key'\\"
+      placeholder.bind=\\"placeholder\\"
+      type.bind=\\"type\\"
+      name.bind=\\"name\\"
+      value.bind=\\"value\\"
+      defaultValue.bind=\\"defaultValue\\"
+      required.bind=\\"required\\"
+    />
+  </template>
+\`)
+export class FormInputComponent {
+  @bindable() attributes: FormInputProps[\\"attributes\\"];
+  @bindable() defaultValue: FormInputProps[\\"defaultValue\\"];
+  @bindable() placeholder: FormInputProps[\\"placeholder\\"];
+  @bindable() type: FormInputProps[\\"type\\"];
+  @bindable() name: FormInputProps[\\"name\\"];
+  @bindable() value: FormInputProps[\\"value\\"];
+  @bindable() required: FormInputProps[\\"required\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > RawText 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface RawTextProps {
+  attributes?: any;
+  text?: string; // builderBlock?: any;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <span
+      class=\\"\\\\\${attributes?.class || attributes?.className}\\"
+      innerHTML.bind=\\"text || ''\\"
+    ></span>
+  </template>
+\`)
+export class RawText {
+  @bindable() attributes: RawTextProps[\\"attributes\\"];
+  @bindable() text: RawTextProps[\\"text\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Section 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface SectionProps {
+  maxWidth?: number;
+  attributes?: any;
+  children?: any;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <section
+      spreadProps.bind=\\"attributes\\"
+      style.bind=\\"maxWidth && typeof maxWidth === 'number' ? {
+        maxWidth: maxWidth
+      } : undefined\\"
+    >
+      <slot></slot>
+    </section>
+  </template>
+\`)
+export class SectionComponent {
+  @bindable() attributes: SectionProps[\\"attributes\\"];
+  @bindable() maxWidth: SectionProps[\\"maxWidth\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Select 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import { Builder } from \\"@builder.io/sdk\\";
+
+export interface FormSelectProps {
+  options?: {
+    name?: string;
+    value: string;
+  }[];
+  attributes?: any;
+  name?: string;
+  value?: string;
+  defaultValue?: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@builder.io/sdk\\"></require>
+
+    <select
+      spreadProps.bind=\\"attributes\\"
+      value.bind=\\"value\\"
+      key.bind=\\"Builder.isEditing && defaultValue ? defaultValue : 'default-key'\\"
+      defaultValue.bind=\\"defaultValue\\"
+      name.bind=\\"name\\"
+    >
+      <template repeat.for=\\"option of options\\">
+        <option value.bind=\\"option.value\\" data-index.bind=\\"$index\\">
+          \\\\\${option.name || option.value}
+        </option>
+      </template>
+    </select>
+  </template>
+\`)
+export class SelectComponent {
+  @bindable() attributes: FormSelectProps[\\"attributes\\"];
+  @bindable() value: FormSelectProps[\\"value\\"];
+  @bindable() defaultValue: FormSelectProps[\\"defaultValue\\"];
+  @bindable() name: FormSelectProps[\\"name\\"];
+  @bindable() options: FormSelectProps[\\"options\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Stamped.io 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import { kebabCase } from \\"lodash\\";
+import { snakeCase } from \\"lodash\\";
+
+type SmileReviewsProps = {
+  productId: string;
+  apiKey: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"lodash\\"></require>
+    <require from=\\"lodash\\"></require>
+
+    <div data-user.bind=\\"name\\">
+      <button click.delegate=\\"showReviewPrompt = true\\">Write a review</button>
+
+      <template if.bind=\\"showReviewPrompt || 'asdf'\\">
+        <input placeholder=\\"Email\\" />
+
+        <input placeholder=\\"Title\\" class=\\"input\\" />
+
+        <textarea
+          placeholder=\\"How was your experience?\\"
+          class=\\"textarea\\"
+        ></textarea>
+
+        <button
+          class=\\"button\\"
+          click.delegate=\\"
+        $event.preventDefault();
+        showReviewPrompt = false;
+  \\"
+        >
+          Submit
+        </button>
+      </template>
+
+      <template repeat.for=\\"review of reviews\\">
+        <div class=\\"review\\" key.bind=\\"review.id\\">
+          <img class=\\"img\\" src.bind=\\"review.avatar\\" />
+
+          <div class=\\"\\\\\${showReviewPrompt ? 'bg-primary' : 'bg-secondary'}\\">
+            <div>N: \\\\\${$index}</div>
+
+            <div>\\\\\${review.author}</div>
+
+            <div>\\\\\${review.reviewMessage}</div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <style>
+      .input {
+        display: block;
+      }
+      .textarea {
+        display: block;
+      }
+      .button {
+        display: block;
+      }
+      .review {
+        margin: 10px;
+        padding: 10px;
+        background: white;
+        display: flex;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .img {
+        height: 30px;
+        width: 30px;
+        margin-right: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class SmileReviews {
+  @bindable() apiKey: SmileReviewsProps[\\"apiKey\\"];
+  @bindable() productId: SmileReviewsProps[\\"productId\\"];
+
+  reviews = [];
+  name = \\"test\\";
+  showReviewPrompt = false;
+  kebabCaseValue() {
+    return kebabCase(\\"testThat\\");
+  }
+  snakeCaseValue() {
+    return snakeCase(\\"testThis\\");
+  }
+
+  attached() {
+    fetch(
+      \`https://stamped.io/api/widget/reviews?storeUrl=builder-io.myshopify.com&apiKey=\${
+        this.apiKey || \\"pubkey-8bbDq7W6w4sB3OWeM1HUy2s47702hM\\"
+      }&productId=\${this.productId || \\"2410511106127\\"}\`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        this.reviews = data.data;
+      });
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Submit 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface ButtonProps {
+  attributes?: any;
+  text?: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <button type=\\"submit\\" spreadProps.bind=\\"attributes\\">\\\\\${text}</button>
+  </template>
+\`)
+export class SubmitButton {
+  @bindable() attributes: ButtonProps[\\"attributes\\"];
+  @bindable() text: ButtonProps[\\"text\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Text 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import { Builder } from \\"@builder.io/sdk\\";
+
+export interface TextProps {
+  attributes?: any;
+  rtlMode: boolean;
+  text?: string;
+  content?: string;
+  builderBlock?: any;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@builder.io/sdk\\"></require>
+
+    <div
+      contentEditable.bind=\\"allowEditingText || undefined\\"
+      data-name.bind=\\"{
+        test: name || 'any name'
+      }\\"
+      innerHTML.bind=\\"text || content || name || '<p class=&quot;text-lg&quot;>my name</p>'\\"
+    ></div>
+  </template>
+\`)
+export class Text {
+  @bindable() text: TextProps[\\"text\\"];
+  @bindable() content: TextProps[\\"content\\"];
+
+  name = \\"Decadef20\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Textarea 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface TextareaProps {
+  attributes?: any;
+  name?: string;
+  value?: string;
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <textarea
+      spreadProps.bind=\\"attributes\\"
+      placeholder.bind=\\"placeholder\\"
+      name.bind=\\"name\\"
+      value.bind=\\"value\\"
+      defaultValue.bind=\\"defaultValue\\"
+    ></textarea>
+  </template>
+\`)
+export class Textarea {
+  @bindable() attributes: TextareaProps[\\"attributes\\"];
+  @bindable() placeholder: TextareaProps[\\"placeholder\\"];
+  @bindable() name: TextareaProps[\\"name\\"];
+  @bindable() value: TextareaProps[\\"value\\"];
+  @bindable() defaultValue: TextareaProps[\\"defaultValue\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > Video 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface VideoProps {
+  attributes?: any;
+  video?: string;
+  autoPlay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  playsInline?: boolean;
+  aspectRatio?: number;
+  width?: number;
+  height?: number;
+  fit?: \\"contain\\" | \\"cover\\" | \\"fill\\";
+  position?:
+    | \\"center\\"
+    | \\"top\\"
+    | \\"left\\"
+    | \\"right\\"
+    | \\"bottom\\"
+    | \\"top left\\"
+    | \\"top right\\"
+    | \\"bottom left\\"
+    | \\"bottom right\\";
+  posterImage?: string;
+  lazyLoad?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <video
+      preload=\\"none\\"
+      spreadProps.bind=\\"attributes\\"
+      style.bind=\\"{
+        width: '100%',
+        height: '100%',
+        ...attributes?.style,
+        objectFit: fit,
+        objectPosition: position,
+        // Hack to get object fit to work as expected and
+        // not have the video overflow
+        borderRadius: 1
+      }\\"
+      key.bind=\\"video || 'no-src'\\"
+      poster.bind=\\"posterImage\\"
+      autoplay.bind=\\"autoPlay\\"
+      muted.bind=\\"muted\\"
+      controls.bind=\\"controls\\"
+      loop.bind=\\"loop\\"
+    ></video>
+  </template>
+\`)
+export class Video {
+  @bindable() attributes: VideoProps[\\"attributes\\"];
+  @bindable() fit: VideoProps[\\"fit\\"];
+  @bindable() position: VideoProps[\\"position\\"];
+  @bindable() video: VideoProps[\\"video\\"];
+  @bindable() posterImage: VideoProps[\\"posterImage\\"];
+  @bindable() autoPlay: VideoProps[\\"autoPlay\\"];
+  @bindable() muted: VideoProps[\\"muted\\"];
+  @bindable() controls: VideoProps[\\"controls\\"];
+  @bindable() loop: VideoProps[\\"loop\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > arrowFunctionInUseStore 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello \\\\\${name}</div>
+  </template>
+\`)
+export class MyComponent {
+  name = \\"steve\\";
+  setName(value) {
+    this.name = value;
+  }
+  updateNameWithArrowFn(value) {
+    this.name = value;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > class + ClassName + css 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"test2 test div\\">
+      Hello! I can run in React, Vue, Solid, or Liquid!
+    </div>
+
+    <style>
+      .div {
+        padding: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > class + css 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"test div\\">Hello! I can run in React, Vue, Solid, or Liquid!</div>
+
+    <style>
+      .div {
+        padding: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > className + css 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"test div\\">Hello! I can run in React, Vue, Solid, or Liquid!</div>
+
+    <style>
+      .div {
+        padding: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > className 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string | JSX.Element;
+  slotTesting: JSX.Element;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <div class=\\"no binding\\">Without Binding</div>
+
+      <div class=\\"\\\\\${bindings}\\">With binding</div>
+    </div>
+  </template>
+\`)
+export class ClassNameCode {
+  bindings = \\"a binding\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > contentState 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import BuilderContext from \\"@dummy/context\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@dummy/context\\"></require>
+
+    <div>setting context</div>
+  </template>
+\`)
+export class RenderContent {
+  @bindable() content: any;
+  @bindable() customComponents: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > defaultProps 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface ButtonProps {
+  attributes?: any;
+  text?: string;
+  link?: string;
+  openLinkInNewTab?: boolean;
+  onClick?: () => void;
+}
+
+const defaultProps = {
+  text: \\"default text\\",
+  link: \\"https://builder.io/\\",
+  openLinkInNewTab: false,
+  onClick: () => {
+    console.log(\\"hi\\");
+  },
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template if.bind=\\"link\\">
+        <a
+          spreadProps.bind=\\"attributes\\"
+          href.bind=\\"link\\"
+          target.bind=\\"openLinkInNewTab ? '_blank' : undefined\\"
+        >
+          \\\\\${text}
+        </a>
+      </template>
+
+      <template if.bind=\\"!link\\">
+        <button
+          type=\\"button\\"
+          spreadProps.bind=\\"attributes\\"
+          click.delegate=\\"onClick($event)\\"
+        >
+          \\\\\${text}
+        </button>
+      </template>
+    </div>
+  </template>
+\`)
+export class Button {
+  @bindable() link: ButtonProps[\\"link\\"] = defaultProps[\\"link\\"];
+  @bindable() attributes: ButtonProps[\\"attributes\\"];
+  @bindable() openLinkInNewTab: ButtonProps[\\"openLinkInNewTab\\"] =
+    defaultProps[\\"openLinkInNewTab\\"];
+  @bindable() text: ButtonProps[\\"text\\"] = defaultProps[\\"text\\"];
+  @bindable() onClick: ButtonProps[\\"onClick\\"] = defaultProps[\\"onClick\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > defaultPropsOutsideComponent 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface ButtonProps {
+  attributes?: any;
+  text?: string;
+  link?: string;
+  openLinkInNewTab?: boolean;
+  onClick: () => void;
+}
+
+const defaultProps = {
+  text: \\"default text\\",
+  link: \\"https://builder.io/\\",
+  openLinkInNewTab: false,
+  onClick: () => {},
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template if.bind=\\"link\\">
+        <a
+          spreadProps.bind=\\"attributes\\"
+          href.bind=\\"link\\"
+          target.bind=\\"openLinkInNewTab ? '_blank' : undefined\\"
+        >
+          \\\\\${text}
+        </a>
+      </template>
+
+      <template if.bind=\\"!link\\">
+        <button
+          type=\\"button\\"
+          spreadProps.bind=\\"attributes\\"
+          click.delegate=\\"onClick($event)\\"
+        >
+          \\\\\${text}
+        </button>
+      </template>
+    </div>
+  </template>
+\`)
+export class Button {
+  @bindable() link: ButtonProps[\\"link\\"] = defaultProps[\\"link\\"];
+  @bindable() attributes: ButtonProps[\\"attributes\\"];
+  @bindable() openLinkInNewTab: ButtonProps[\\"openLinkInNewTab\\"] =
+    defaultProps[\\"openLinkInNewTab\\"];
+  @bindable() text: ButtonProps[\\"text\\"] = defaultProps[\\"text\\"];
+  @bindable() onClick: ButtonProps[\\"onClick\\"] = defaultProps[\\"onClick\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > defaultValsWithTypes 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+const DEFAULT_VALUES: Props = {
+  name: \\"Sami\\",
+};
+
+type Props = {
+  name: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello \\\\\${name || DEFAULT_VALUES.name}</div>
+  </template>
+\`)
+export class ComponentWithTypes {
+  @bindable() name: Props[\\"name\\"];
+
+  DEFAULT_VALUES = DEFAULT_VALUES;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > expressionState 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>\\\\\${refToUse}</div>
+  </template>
+\`)
+export class MyComponent {
+  @bindable() componentRef: any;
+
+  refToUse = !(this.componentRef instanceof Function)
+    ? this.componentRef
+    : null;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > import types 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import RenderBlock from \\"./builder-render-block.raw\\";
+
+type RenderContentProps = {
+  options?: GetContentOptions;
+  content: BuilderContent;
+  renderContentProps: RenderBlockProps;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"./builder-render-block.raw\\"></require>
+
+    <render-block></render-block>
+  </template>
+\`)
+export class RenderContent {
+  @bindable() renderContentProps: RenderContentProps[\\"renderContentProps\\"];
+
+  getRenderContentProps(block, index) {
+    return {
+      block: block,
+      index: index,
+    };
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > multipleSpreads 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input spreadProps0.bind=\\"attrs\\" spreadProps1.bind=\\"props\\" />
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() attrs: any;
+  @bindable() props: any;
+
+  attrs = {
+    hello: \\"world\\",
+  };
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > nestedStyles 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"div\\">Hello world</div>
+
+    <style>
+      .div {
+        display: flex;
+        foo: var(--bar);
+      }
+      @media (max-width: env(--mobile)) {
+        .div {
+          display: block;
+        }
+      }
+      .div:hover {
+        display: flex;
+      }
+      .div .nested-selector {
+        display: grid;
+      }
+    </style>
+  </template>
+\`)
+export class NestedStyles {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > onInit & onMount 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+  </template>
+\`)
+export class OnInit {
+  constructor() {
+    console.log(\\"onInit\\");
+  }
+
+  attached() {
+    console.log(\\"onMount\\");
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > onInit 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export const defaultValues = {
+  name: \\"PatrickJS\\",
+};
+
+type Props = {
+  name: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Default name defined by parent \\\\\${name}</div>
+  </template>
+\`)
+export class OnInit {
+  @bindable() name: Props[\\"name\\"];
+
+  name = \\"\\";
+
+  constructor() {
+    this.name = defaultValues.name || this.name;
+    console.log(\\"set defaults with props\\");
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > onMount 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+  </template>
+\`)
+export class Comp {
+  attached() {
+    console.log(\\"Runs on mount\\");
+  }
+
+  detached() {
+    console.log(\\"Runs on unMount\\");
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > onUpdate 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class OnUpdate {
+  @computedFrom()
+  get propertyObserver() {
+    console.log(\\"Runs on every update/rerender\\");
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > onUpdateWithDeps 1`] = `
+"import {
+  bindable,
+  customElement,
+  computedFrom,
+  inlineView,
+} from \\"aurelia-framework\\";
+
+type Props = {
+  size: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class OnUpdateWithDeps {
+  @bindable() size: Props[\\"size\\"];
+
+  a = \\"a\\";
+  b = \\"b\\";
+
+  @computedFrom()
+  get propertyObserver() {
+    console.log(
+      \\"Runs when this.a, this.b or size changes\\",
+      this.a,
+      this.b,
+      this.size
+    );
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > preserveExportOrLocalStatement 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+const b = 3;
+const foo = () => {};
+export const a = 3;
+export const bar = () => {};
+export function run<T>(value: T) {}
+
+type Types = {
+  s: any[];
+};
+interface IPost {
+  len: number;
+}
+export interface MyBasicComponentProps {
+  id: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+  </template>
+\`)
+export class MyBasicComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > preserveTyping 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export type A = \\"test\\";
+export interface C {
+  n: \\"test\\";
+}
+type B = \\"test2\\";
+interface D {
+  n: \\"test\\";
+}
+export interface MyBasicComponentProps {
+  name: string;
+  age?: number;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello! I can run in React, Vue, Solid, or Liquid! \\\\\${name}</div>
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() name: MyBasicComponentProps[\\"name\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > propsDestructure 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  children: any;
+  type: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <slot></slot>
+
+      \\\\\${type} Hello! I can run in React, Vue, Solid, or Liquid!
+    </div>
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() type: Props[\\"type\\"];
+
+  name = \\"Decadef20\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > propsInterface 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+interface Person {
+  name: string;
+  age?: number;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello! I can run in React, Vue, Solid, or Liquid! \\\\\${name}</div>
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() name: (Person | never)[\\"name\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > propsType 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+type Person = {
+  name: string;
+  age?: number;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>Hello! I can run in React, Vue, Solid, or Liquid! \\\\\${name}</div>
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() name: Person[\\"name\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > referencingFunInsideHook 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class OnUpdate {
+  foo = function foo(params) {};
+  bar = function bar() {};
+  zoo = function zoo() {
+    const params = {
+      cb: this.bar,
+    };
+  };
+
+  @computedFrom()
+  get propertyObserver() {
+    this.foo({
+      someOption: this.bar,
+    });
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > renderContentExample 1`] = `
+"import {
+  bindable,
+  customElement,
+  computedFrom,
+  inlineView,
+} from \\"aurelia-framework\\";
+
+import {
+  sendComponentsToVisualEditor,
+  dispatchNewContentToVisualEditor,
+  trackClick,
+} from \\"@dummy/injection-js\\";
+import BuilderContext from \\"@dummy/context\\";
+import RenderBlocks from \\"@dummy/RenderBlocks.lite.tsx\\";
+
+type Props = {
+  customComponents: string[];
+  content: {
+    blocks: any[];
+    id: string;
+  };
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"@dummy/injection-js\\"></require>
+    <require from=\\"@dummy/context\\"></require>
+    <require from=\\"@dummy/RenderBlocks.lite.tsx\\"></require>
+
+    <div class=\\"div\\" click.delegate=\\"trackClick(content.id)\\">
+      <render-blocks blocks.bind=\\"content.blocks\\"></render-blocks>
+    </div>
+    \\\\\${propertyObserver}
+
+    <style>
+      .div {
+        display: flex;
+        flex-direction: columns;
+      }
+    </style>
+  </template>
+\`)
+export class RenderContent {
+  @bindable() content: Props[\\"content\\"];
+  @bindable() customComponents: Props[\\"customComponents\\"];
+
+  trackClick = trackClick;
+
+  attached() {
+    sendComponentsToVisualEditor(this.customComponents);
+  }
+
+  @computedFrom()
+  get propertyObserver() {
+    dispatchNewContentToVisualEditor(this.content);
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > rootFragmentMultiNode 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface ButtonProps {
+  attributes?: any;
+  text?: string;
+  link?: string;
+  openLinkInNewTab?: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <template if.bind=\\"link\\">
+      <a
+        spreadProps.bind=\\"attributes\\"
+        href.bind=\\"link\\"
+        target.bind=\\"openLinkInNewTab ? '_blank' : undefined\\"
+      >
+        \\\\\${text}
+      </a>
+    </template>
+
+    <template if.bind=\\"!link\\">
+      <button type=\\"button\\" spreadProps.bind=\\"attributes\\">\\\\\${text}</button>
+    </template>
+  </template>
+\`)
+export class Button {
+  @bindable() link: ButtonProps[\\"link\\"];
+  @bindable() attributes: ButtonProps[\\"attributes\\"];
+  @bindable() openLinkInNewTab: ButtonProps[\\"openLinkInNewTab\\"];
+  @bindable() text: ButtonProps[\\"text\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > self-referencing component 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      \\\\\${name}
+
+      <template if.bind=\\"name === 'Batman'\\">
+        <my-component name=\\"Bruce Wayne\\"></my-component>
+      </template>
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  @bindable() name: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > self-referencing component with children 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      \\\\\${name}
+
+      <slot></slot>
+
+      <template if.bind=\\"name === 'Batman'\\">
+        <my-component name=\\"Bruce\\">
+          <div>Wayne</div>
+        </my-component>
+      </template>
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  @bindable() name: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > spreadAttrs 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input spreadProps.bind=\\"attrs\\" />
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() attrs: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > spreadNestedProps 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input spreadProps.bind=\\"nested\\" />
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() nested: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > spreadProps 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input spreadProps.bind=\\"props\\" />
+  </template>
+\`)
+export class MyBasicComponent {
+  @bindable() props: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > subComponent 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+import Foo from \\"./foo-sub-component\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+    <require from=\\"./foo-sub-component\\"></require>
+
+    <foo></foo>
+  </template>
+\`)
+export class SubComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > svgComponent 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <svg
+      fill=\\"none\\"
+      role=\\"img\\"
+      viewBox.bind=\\"'0 0 ' + 42 + ' ' + 42\\"
+      width.bind=\\"42\\"
+      height.bind=\\"42\\"
+    >
+      <defs>
+        <filter id=\\"prefix__filter0_f\\" filterUnits=\\"userSpaceOnUse\\">
+          <fe-flood result=\\"BackgroundImageFix\\"></fe-flood>
+
+          <fe-blend
+            in=\\"SourceGraphic\\"
+            in2=\\"BackgroundImageFix\\"
+            result=\\"shape\\"
+          ></fe-blend>
+
+          <fe-gaussian-blur
+            result=\\"effect1_foregroundBlur\\"
+            stdDeviation.bind=\\"7\\"
+          ></fe-gaussian-blur>
+        </filter>
+      </defs>
+    </svg>
+  </template>
+\`)
+export class SvgComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > typeDependency 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+import type { Foo } from \\"./foo-type\\";
+import type { Foo as Foo2 } from \\"./type-export\\";
+export type TypeDependencyProps = {
+  foo: Foo;
+  foo2: Foo2;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>\\\\\${foo}</div>
+  </template>
+\`)
+export class TypeDependency {
+  @bindable() foo: TypeDependencyProps[\\"foo\\"];
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > use-style 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <button type=\\"button\\">Button</button>
+
+    <style>
+      button {
+        background: blue;
+        color: white;
+        font-size: 12px;
+        outline: 1px solid black;
+      }
+    </style>
+  </template>
+\`)
+export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > use-style-and-css 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <button type=\\"button\\" class=\\"button\\">Button</button>
+
+    <style>
+      .button {
+        background: blue;
+        color: white;
+      }
+
+      button {
+        font-size: 12px;
+        outline: 1px solid black;
+      }
+    </style>
+  </template>
+\`)
+export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > use-style-outside-component 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <button type=\\"button\\">Button</button>
+
+    <style>
+      button {
+        background: blue;
+        color: white;
+        font-size: 12px;
+        outline: 1px solid black;
+      }
+    </style>
+  </template>
+\`)
+export class MyComponent {}
+"
+`;

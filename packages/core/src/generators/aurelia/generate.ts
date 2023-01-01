@@ -609,7 +609,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
     const assignImportedVars = Array.from(
       new Set([...usedVars.map((variable) => variable.name), ...customImports, ...localExportVars]),
-    );
+    ).filter((importedVar) => {
+      const isCustomElement = customElements.find((element) => element.name === importedVar); /*?*/
+      const dontAssignWhenCustomElement = !isCustomElement;
+      return dontAssignWhenCustomElement;
+    });
 
     const jsImports: string[] = [];
     otherMapped.forEach((mapped) => {
@@ -913,8 +917,6 @@ function assembleTemplate(
   }
 
   // Step: Import
-
-  // json; /*?*/
 
   // template; /*?*/
 

@@ -71,6 +71,8 @@ enum BuiltInKeywords {
 enum AureliaKeywords {
   'Else' = 'else',
   'If' = 'if',
+  'Require' = 'require',
+  'import' = 'import',
   'Tempalte' = 'template',
 }
 
@@ -593,7 +595,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     const spreadCollector: string[] = [];
-    const templateBody = assembleTemplate(json, options, aureliaImports, spreadCollector);
+    const templateBody = assembleTemplateBody(json, options, spreadCollector);
     const customElementsImports = importedVars.filter((variable) => {
       const nameConvention = kebabCase(variable.name);
       const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
@@ -628,17 +630,50 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       const dontAssignWhenCustomElement = !isCustomElement;
       return dontAssignWhenCustomElement;
     });
-    const templateImports = assembleTemplateImports(aureliaImports, customElementsImports);
 
-    // assignImportedVars; /*?*/
+    const importKeyword = getTemplateImportName();
+    const templateImports = assembleTemplateImports(
+      aureliaImports,
+      customElementsImports,
+      importKeyword,
+    );
 
     const jsImports: string[] = [];
     otherMapped.forEach((mapped) => {
       const [_, jsImport] = mapped.split(MARKER_JS_MAPPED);
-      jsImports.push(jsImport);
+      jsImports.push(jsImport.trim());
     });
 
-    const finalTemplate = indent(templateBody, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+    let templateContent = '';
+
+    if (templateImports) {
+      templateContent += '\n';
+      templateContent += templateImports;
+      templateContent += '\n';
+    }
+
+    templateContent += '\n';
+    templateContent += templateBody;
+
+    let finalTemplate = '';
+
+    // Step: Opening template tag V1
+    if (isAureliaV1()) {
+      finalTemplate += `<${AureliaKeywords.Tempalte}>`;
+    }
+
+    if (IS_DEV) {
+      finalTemplate += 'test';
+    }
+
+    finalTemplate += indent(templateContent, 2);
+
+    // Step: Closing template tag V1
+    if (isAureliaV1()) {
+      finalTemplate += `</${AureliaKeywords.Tempalte}>`;
+    }
+
+    const indentedTemplate = indent(finalTemplate, 6).replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
     // const finalTemplate = template;
     // const finalTemplate = indent(template, 6);
     // finalTemplate; /*?*/
@@ -660,7 +695,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     const getContextCodeResult = getContextCode(json);
-    getContextCodeResult; /*?*/
 
     let getContextCodeResultMethod = '';
     let callGetContextCodeResultMethod = '';
@@ -832,7 +866,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     str += dedent`
     ${shouldAddAutoinjectImport ? '@autoinject' : ''}
     ${IS_DEV ? '@customElement("my-component")' : ''}
-    @inlineView(\`\n  ${finalTemplate}\`)
+    @inlineView(\`\n  ${indentedTemplate}\n\`)
     `;
 
     const finalProps = new Set([...Array.from(props), ...spreadCollector]);
@@ -951,6 +985,19 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     return str;
+
+    function isAureliaV1() {
+      const is = options.aureliaVersion === AureliaV1;
+      return is;
+    }
+
+    function getTemplateImportName() {
+      if (isAureliaV1()) {
+        return AureliaKeywords.Require;
+      }
+
+      return AureliaKeywords.import;
+    }
   };
 
 const tryFormat = (str: string, parser: string) => {
@@ -972,15 +1019,17 @@ const tryFormat = (str: string, parser: string) => {
   return str;
 };
 
-function assembleTemplateImports(aureliaImports: string[], customElementsImports: ImportData[]) {
+function assembleTemplateImports(
+  aureliaImports: string[],
+  customElementsImports: ImportData[],
+  importKeyword: string,
+) {
+  // customElementsImports; /*?*/
   const [, ...otherMapped] = aureliaImports;
-  const templateImports = customElementsImports.map((imported) => imported.path);
-  templateImports; /*?*/
-  // const templateImports: string[] = [];
-  // otherMapped.forEach((mapped) => {
-  //   const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
-  //   templateImports.push(templateImport);
-  // });
+  const templateImports = customElementsImports.map((imported) => {
+    const importString = `<${importKeyword} from="${imported.path}"></${importKeyword}>`;
+    return importString;
+  });
 
   let template = '';
 
@@ -990,26 +1039,16 @@ function assembleTemplateImports(aureliaImports: string[], customElementsImports
     if (DEBUG) {
       template += '--[[TemplateImports]]--';
     }
-    template += '\n';
-    template += '\n';
   }
 
   return template;
 }
 
-function assembleTemplate(
+function assembleTemplateBody(
   json: MitosisComponent,
   options: ToAureliaOptions,
-  aureliaImports: string[],
   spreadCollector: string[],
 ): string {
-  const [, ...otherMapped] = aureliaImports;
-  const templateImports: string[] = [];
-  otherMapped.forEach((mapped) => {
-    const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
-    templateImports.push(templateImport);
-  });
-
   const childComponents: string[] = [];
   json.imports.forEach(({ imports }) => {
     Object.keys(imports).forEach((key) => {
@@ -1026,28 +1065,9 @@ function assembleTemplate(
   // template; /*?*/
   let template = '';
 
-  // Step: Opening template tag V1
-  if (isAureliaV1()) {
-    template += `<${AureliaKeywords.Tempalte}>`;
-  }
-
-  if (IS_DEV) {
-    template += 'test';
-  }
-
   // Step: Import
 
   // template; /*?*/
-
-  // Step: Template imports
-  if (otherMapped) {
-    template += templateImports.join('');
-    if (DEBUG) {
-      template += '--[[TemplateImports]]--';
-    }
-    template += '\n';
-    template += '\n';
-  }
 
   template += json.children
     .map((item) =>
@@ -1080,11 +1100,6 @@ function assembleTemplate(
     }
   }
 
-  // Step: Closing template tag V1
-  if (isAureliaV1()) {
-    template += `</${AureliaKeywords.Tempalte}>`;
-  }
-
   // Prettier
   if (options.prettier !== false) {
     template = tryFormat(template, 'html');
@@ -1114,10 +1129,6 @@ function assembleTemplate(
   });
 
   return template;
-
-  function isAureliaV1() {
-    return options.aureliaVersion === AureliaV1;
-  }
 }
 
 function getContextCode(json: MitosisComponent) {

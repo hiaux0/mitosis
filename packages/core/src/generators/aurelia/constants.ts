@@ -23,10 +23,20 @@ export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
       ? `${IMPORT_MARKER}<require from="${path}"></require>`
       : `import '${path}';`;
 
-    const jsMapped = importValue ? `import ${importValue} from '${path}';` : `import '${path}';`;
+    let jsMapped = '';
+    if (importValue) {
+      let replaced = importValue;
+      componentsUsed.forEach((componentName) => {
+        replaced = replaced.replace(`${componentName},`, '');
+        replaced = replaced.replace(`, ${componentName}`, '');
+        replaced = replaced.replace(`,${componentName}`, '');
+      });
+      jsMapped = `import ${replaced} from '${path}';`;
+    } else {
+      jsMapped = `import '${path}';`;
+    }
 
     const finalMapped = `${templateMapped}${MARKER_JS_MAPPED}${jsMapped}`;
-
     return finalMapped;
   },
 };

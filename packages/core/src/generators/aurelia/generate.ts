@@ -42,7 +42,7 @@ import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './cons
 import { encodeQuotes } from '../vue/helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-const DEBUG = false;
+const DEBUG = true;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -564,25 +564,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     // template; /*?*/
-    const aureliaImports = renderPreComponent({
-      component: json,
-      target: 'aurelia',
-      excludeMitosisComponents: !options.preserveImports,
-      // excludeMitosisComponents: !options.standalone && !options.preserveImports,
-      // preserveFileExtensions: options.preserveFileExtensions,
-      componentsUsed,
-      importMapper: options?.importMapper,
-    });
-    // aureliaImports; /*?*/
-    const [jsExports, ...otherMapped] = aureliaImports.split(IMPORT_MARKER);
-    const templateImports: string[] = [];
-    const jsImports: string[] = [];
-    otherMapped.forEach((mapped) => {
-      const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
-      templateImports.push(templateImport);
-      jsImports.push(jsImport);
-    });
-
     let template = '';
 
     // Step: Opening template tag V1
@@ -594,8 +575,78 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       template += 'test';
     }
 
+    // Step: Import
+    const aureliaImports = renderPreComponent({
+      component: json,
+      target: 'aurelia',
+      excludeMitosisComponents: !options.preserveImports,
+      // excludeMitosisComponents: !options.standalone && !options.preserveImports,
+      // preserveFileExtensions: options.preserveFileExtensions,
+      componentsUsed,
+      importMapper: options?.importMapper,
+    });
+    const [jsExports, ...otherMapped] = aureliaImports.split(IMPORT_MARKER);
+    const templateImports: string[] = [];
+    const jsImports: string[] = [];
+    otherMapped.forEach((mapped) => {
+      const [templateImport, jsImport] = mapped.split(MARKER_JS_MAPPED);
+      templateImports.push(templateImport);
+      jsImports.push(jsImport);
+    });
+
+    const importedVars = json.imports?.flatMap((imported) => {
+      /**
+       * `import { Builder as AST } from '@builder.io/sdk';`
+       * -->
+       * AST
+       */
+      // imported.imports; /*?*/
+      // imported.path; /*?*/
+
+      const _importedVars = Object.keys(imported.imports);
+      const resultArray = _importedVars.map((importedVar) => {
+        return {
+          name: importedVar,
+          path: imported.path,
+        };
+      });
+      // const resultArray = [];
+      // Object.entries(imported.imports).forEach((importedVar) => {
+      //   importedVar;
+      // });
+      return resultArray;
+    });
+    importedVars; /*?*/
+    // json; /*?*/
+
+    // template; /*?*/
+    const customElements = importedVars.filter((variable) => {
+      const nameConvention = kebabCase(variable.name);
+      const used = template.includes(nameConvention); // TODO Find a more precise way to deterimne whether a var was used
+      return used;
+    });
+
+    const usedVars = importedVars.filter((variable) => {
+      const used = template.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
+      return used;
+    });
+    /**
+     * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
+     * `import { Builder } from '@builder.io/sdk';`
+     * here, `Builder` will not be assigned to class
+     */
+    const customImports = getCustomImports(json);
+    const { exports: localExports = {} } = json;
+    const localExportVars = Object.keys(localExports).filter(
+      (key) => localExports[key].usedInLocal,
+    );
+    const assignImportedVars = Array.from(
+      new Set([...usedVars, ...customImports, ...localExportVars]),
+    );
+
     // Step: Template imports
     if (otherMapped) {
+      // templateImports; /*?*/
       template += templateImports.join('');
       if (DEBUG) {
         template += '--[[TemplateImports]]--';
@@ -797,34 +848,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     ${IS_DEV ? '@customElement("my-component")' : ''}
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
-
-    // Step: Import
-    const importedVars = json.imports?.flatMap((imported) => {
-      /**
-       * `import { Builder as AST } from '@builder.io/sdk';`
-       * -->
-       * AST
-       */
-      const _importedVars = Object.keys(imported.imports);
-      return [..._importedVars];
-    });
-    const usedVars = importedVars.filter((variable) => {
-      const used = template.includes(variable); // TODO Find a more precise way to deterimne whether a var was used
-      return used;
-    });
-    /**
-     * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
-     * `import { Builder } from '@builder.io/sdk';`
-     * here, `Builder` will not be assigned to class
-     */
-    const customImports = getCustomImports(json);
-    const { exports: localExports = {} } = json;
-    const localExportVars = Object.keys(localExports).filter(
-      (key) => localExports[key].usedInLocal,
-    );
-    const assignImportedVars = Array.from(
-      new Set([...usedVars, ...customImports, ...localExportVars]),
-    );
 
     const finalProps = new Set([...Array.from(props), ...spreadCollector]);
 

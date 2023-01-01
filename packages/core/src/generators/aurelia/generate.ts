@@ -3,7 +3,10 @@ import { format } from 'prettier/standalone';
 import { collectCss } from '../../helpers/styles/collect-css';
 import { fastClone } from '../../helpers/fast-clone';
 import { getRefs } from '../../helpers/get-refs';
-import { getStateObjectStringFromComponent } from '../../helpers/get-state-object-string';
+import {
+  getStateObjectStringFromComponent,
+  stringifyContextValue,
+} from '../../helpers/get-state-object-string';
 import { mapRefs } from '../../helpers/map-refs';
 import { renderPreComponent } from '../../helpers/render-imports';
 import {
@@ -40,6 +43,7 @@ import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
 import { AureliaV1, ToAureliaOptions } from './types';
 import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './constants';
 import { encodeQuotes } from '../vue/helpers';
+import { stripStateAndProps } from './helpers';
 
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
 const DEBUG = false;
@@ -644,11 +648,27 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       }),
     });
 
+    const getContextCodeResult = getContextCode(json);
+    const setContextCodeResult = setContextCode({ json, options });
+    const shouldAddAutoinjectImport = !!setContextCodeResult;
+    const shouldAddEventAggregatorImport = !!setContextCodeResult;
+    const shouldAddConstructor = !!setContextCodeResult;
+
     let str = '';
+
+    if (shouldAddEventAggregatorImport) {
+      str += `import {
+        EventAggregator
+      } from 'aurelia-event-aggregator';`;
+      str += '\n';
+    }
 
     // Step: Imports
     str += 'import { ';
     let importFromAureliaFramework = ['inlineView'];
+    if (shouldAddAutoinjectImport) {
+      importFromAureliaFramework.push('autoinject');
+    }
     if (IS_DEV) {
       importFromAureliaFramework.push('customElement');
     }
@@ -748,11 +768,34 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     // Step: inlineView
     str += dedent`
+    ${shouldAddAutoinjectImport ? '@autoinject' : ''}
     ${IS_DEV ? '@customElement("my-component")' : ''}
     @inlineView(\`\n  ${finalTemplate}\`)
     `;
 
     const finalProps = new Set([...Array.from(props), ...spreadCollector]);
+
+    let setContextCodeResultMethod;
+    let callSetContextCodeResultMethod;
+    if (setContextCodeResult) {
+      const setContextMethodName = 'setContext';
+      const createSetContextCodeResultMethod = () => {
+        const result = `
+        ${setContextMethodName}() {
+          ${setContextCodeResult}
+        }
+        ${DEBUG ? '// --[[setContentMethod]]--' : ''}
+
+        `;
+        return result;
+      };
+      setContextCodeResultMethod = createSetContextCodeResultMethod();
+
+      callSetContextCodeResultMethod = `
+        this.${setContextMethodName}();
+        ${DEBUG ? '// --[[callSetContextCodeResultMethod]]--' : ''}
+      `;
+    }
 
     // Step: Class
     str += dedent`
@@ -808,7 +851,11 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
       ${
         !hasConstructor
-          ? ''
+          ? shouldAddConstructor
+            ? `constructor(
+              ${shouldAddEventAggregatorImport ? 'private eventAggregator: EventAggregator,' : ''}
+            ) {}`
+            : ''
           : `constructor(\n${injectables.join(',\n')}) {
             ${
               !json.hooks?.onInit
@@ -820,16 +867,22 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
           }
           `
       }
+
       ${
         !hasOnMount
-          ? ''
+          ? callSetContextCodeResultMethod
+            ? `attached() {
+              ${callSetContextCodeResultMethod}
+              }`
+            : ''
           : `attached() {
-
               ${
                 !json.hooks?.onMount
                   ? ''
                   : `
                 ${json.hooks.onMount?.code}
+
+                ${callSetContextCodeResultMethod ? callSetContextCodeResultMethod : ''}
                 `
               }
             }`
@@ -844,6 +897,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
               ${json.hooks.onUnMount.code}
             }`
       }
+
+      ${setContextCodeResultMethod}
 
     }
   `;
@@ -1001,4 +1056,34 @@ function assembleTemplate(
   function isAureliaV1() {
     return options.aureliaVersion === AureliaV1;
   }
+}
+
+function getContextCode(json: MitosisComponent) {
+  const contextGetters = json.context.get;
+  return Object.entries(contextGetters)
+    .map(([key, context]): string => {
+      const { name } = context;
+
+      return `let ${key} = getContext(${name}.key);`;
+    })
+    .join('\n');
+}
+
+function setContextCode({ json, options }: { json: MitosisComponent; options: ToAureliaOptions }) {
+  const processCode = stripStateAndProps({ json, options });
+
+  return Object.values(json.context.set)
+    .map((context) => {
+      const { value, name, ref } = context;
+      const key = value ? `${name}.key` : name;
+
+      const valueStr = value
+        ? processCode(stringifyContextValue(value))
+        : ref
+        ? processCode(ref)
+        : 'undefined';
+
+      return `this.eventAggregator.publish(${key}, ${valueStr});`;
+    })
+    .join('\n');
 }

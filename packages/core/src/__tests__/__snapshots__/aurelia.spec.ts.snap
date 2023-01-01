@@ -885,6 +885,8 @@ export class ImgComponent {
   @bindable() attributes: ImgProps[\\"attributes\\"];
   @bindable() imgSrc: ImgProps[\\"imgSrc\\"];
   @bindable() altText: ImgProps[\\"altText\\"];
+
+  Builder = Builder;
 }
 "
 `;
@@ -930,6 +932,8 @@ export class FormInputComponent {
   @bindable() name: FormInputProps[\\"name\\"];
   @bindable() value: FormInputProps[\\"value\\"];
   @bindable() required: FormInputProps[\\"required\\"];
+
+  Builder = Builder;
 }
 "
 `;
@@ -1034,6 +1038,8 @@ export class SelectComponent {
   @bindable() defaultValue: FormSelectProps[\\"defaultValue\\"];
   @bindable() name: FormSelectProps[\\"name\\"];
   @bindable() options: FormSelectProps[\\"options\\"];
+
+  Builder = Builder;
 }
 "
 `;

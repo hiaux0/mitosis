@@ -97,6 +97,7 @@ interface AureliaBlockOptions {
   /** Aurelia needs to explicitly set the eg. React props as @bindable */
   spreadCollector?: string[];
   allClassVars?: string[];
+  parentTags?: string[];
 }
 
 const mappers: {
@@ -122,7 +123,32 @@ const mappers: {
         .join('\n');
     const renderedChildren = renderChildren();
 
-    return `\n<slot ${Object.entries({ ...json.bindings, ...json.properties })
+    // json; /*?*/
+    // blockOptions.parentTags; /*?*/
+    // blockOptions.childComponents; /*?*/
+
+    const isInsideComponent = blockOptions.parentTags?.find((parentTagName) => {
+      const included = blockOptions.childComponents?.includes(parentTagName);
+      return included;
+    });
+
+    let result = '';
+
+    const removeSlotInsideComponent =
+      isInsideComponent && options.addWorkaround && isAureliaV1(options);
+    if (removeSlotInsideComponent) {
+      result += `<!-- [Workaround103.Start] -->`;
+      result += '\n<!-- ';
+    } else {
+      result += '\n';
+    }
+    result += '<slot';
+
+    if (!removeSlotInsideComponent) {
+      result += ' ';
+    }
+
+    result += Object.entries({ ...json.bindings, ...json.properties })
       .map(([binding, value]) => {
         if (value && binding === 'name') {
           const selector = pipe(isString(value) ? value : value.code, stripSlotPrefix, kebabCase);
@@ -130,13 +156,37 @@ const mappers: {
           return `name="${selector}"`;
         }
       })
-      .join('\n')}>${Object.entries(json.bindings)
+      .join('\n');
+
+    if (removeSlotInsideComponent) {
+      result += `> -->`;
+      result += `\n<!-- [Workaround103.End] -->\n`;
+    } else {
+      result += '>';
+    }
+
+    result += Object.entries(json.bindings)
       .map(([binding, value]) => {
         if (value && binding !== 'name') {
           return value.code;
         }
       })
-      .join('\n')}${renderedChildren}</slot>`.concat(`${DEBUG ? '\n --[[slot]]--' : ''}`);
+      .join('\n');
+
+    if (removeSlotInsideComponent) {
+      result += `\n<!-- [Workaround104.Start] -->\n`;
+      result += '<!-- ';
+    } else {
+    }
+    // result += '>';
+    result += `${renderedChildren}</slot>`;
+    if (removeSlotInsideComponent) {
+      result += '-->';
+      result += `\n<!-- [Workaround104.End] -->\n`;
+    }
+
+    result += `${DEBUG ? '\n --[[slot]]--' : ''}`;
+    return result;
   },
 };
 
@@ -154,6 +204,7 @@ export const blockToAurelia = (
     indexNameTracker: [],
     spreadCollector: [],
     allClassVars: [],
+    parentTags: [],
   },
 ): string => {
   // blockOptions.callLocation; /*?*/
@@ -238,18 +289,27 @@ export const blockToAurelia = (
     str += `</${AureliaKeywords.Tempalte}>`;
   } else if (json.name === BuiltInEnums.Show) {
     const isTemplateWorkaround =
-      isSlotProperty(json.bindings.when?.code ?? '') && isAureliaV1() && options.addWorkaround;
+      isSlotProperty(json.bindings.when?.code ?? '') &&
+      isAureliaV1(options) &&
+      options.addWorkaround;
+
     if (isTemplateWorkaround) {
       // Workaround: Slot inside template does not work in Aurelia 1
       str += `<!-- [Workaround100.Start] -->`;
+      str += `\n<!-- `;
     } else {
-      str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    }
+    str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    if (isTemplateWorkaround) {
+      str += ' -->\n';
+      str += `<!-- [Workaround100.End] -->`;
     }
 
     if (DEBUG) {
       str += '\n';
       str += '--[[if.bind]]--';
     }
+
     str += json.children
       .map((item) => {
         return blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Show });
@@ -258,15 +318,21 @@ export const blockToAurelia = (
 
     if (isTemplateWorkaround) {
       // Workaround: Slot inside template does not work in Aurelia 1
-      str += `<!-- [Workaround100.End] -->`;
+      str += `<!-- [Workaround101.Start] -->\n`;
+      str += '<!-- ';
     } else {
-      str += `</${AureliaKeywords.Tempalte}>`;
+    }
+    str += `</${AureliaKeywords.Tempalte}>`;
+
+    if (isTemplateWorkaround) {
+      str += ' -->\n';
+      str += `<!-- [Workaround101.End] -->`;
     }
 
     if (isMitosisNode(json.meta.else)) {
       if (isTemplateWorkaround) {
         // Workaround: Slot inside template does not work in Aurelia 1
-        str += `<!-- [Workaround101.Start] -->`;
+        str += `<!-- [Workaround102.Start] -->`;
       } else {
         str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.Else}>\n`;
       }
@@ -279,7 +345,7 @@ export const blockToAurelia = (
 
       if (isTemplateWorkaround) {
         // Workaround: Slot inside template does not work in Aurelia 1
-        str += `<!-- [Workaround101.End] -->`;
+        str += `<!-- [Workaround102.End] -->`;
       } else {
         str += `</${AureliaKeywords.Tempalte}>`;
       }
@@ -450,6 +516,7 @@ export const blockToAurelia = (
           blockToAurelia(item, options, {
             ...blockOptions,
             callLocation: CallLocation.Children,
+            parentTags: [...(blockOptions.parentTags ?? []), item.name],
           }),
         )
         .join('\n');
@@ -468,11 +535,6 @@ export const blockToAurelia = (
     return (
       json.properties.type !== BuiltInEnums.Radio && json.properties.type !== BuiltInEnums.Checkbox
     );
-  }
-
-  function isAureliaV1() {
-    const is = options.aureliaVersion === AureliaV1;
-    return is;
   }
 };
 
@@ -739,7 +801,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     let finalTemplate = '';
 
     // Step: Opening template tag V1
-    if (isAureliaV1()) {
+    if (isAureliaV1(options)) {
       finalTemplate += `<${AureliaKeywords.Tempalte}>`;
     }
 
@@ -750,7 +812,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     finalTemplate += indent(templateContent, 2);
 
     // Step: Closing template tag V1
-    if (isAureliaV1()) {
+    if (isAureliaV1(options)) {
       finalTemplate += `</${AureliaKeywords.Tempalte}>`;
     }
 
@@ -1069,13 +1131,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
 
     return str;
 
-    function isAureliaV1() {
-      const is = options.aureliaVersion === AureliaV1;
-      return is;
-    }
-
     function getTemplateImportName() {
-      if (isAureliaV1()) {
+      if (isAureliaV1(options)) {
         return AureliaKeywords.Require;
       }
 
@@ -1160,6 +1217,7 @@ function assembleTemplateBody(
         callLocation: CallLocation.ChildrenForTemplate,
         spreadCollector,
         allClassVars,
+        parentTags: [item.name],
       }),
     )
     .join('\n  ');
@@ -1246,4 +1304,9 @@ function setContextCode({ json, options }: { json: MitosisComponent; options: To
       return `this.eventAggregator.publish(${key}, ${valueStr});`;
     })
     .join('\n');
+}
+
+function isAureliaV1(options: Pick<ToAureliaOptions, 'aureliaVersion'>) {
+  const is = options.aureliaVersion === AureliaV1;
+  return is;
 }

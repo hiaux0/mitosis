@@ -1,3 +1,5 @@
+const DEBUG = false;
+
 import dedent from 'dedent';
 import { format } from 'prettier/standalone';
 import { collectCss } from '../../helpers/styles/collect-css';
@@ -40,18 +42,12 @@ import { flow, pipe } from 'fp-ts/lib/function';
 import { isMitosisNode, MitosisComponent } from '../..';
 import { mergeOptions } from '../../helpers/merge-options';
 import { CODE_PROCESSOR_PLUGIN } from '../../helpers/plugins/process-code';
-import { AureliaV1, ToAureliaOptions } from './types';
-import { DEFAULT_AURELIA_OPTIONS, IMPORT_MARKER, MARKER_JS_MAPPED } from './constants';
+import { AureliaV1, ImportData, ToAureliaOptions } from './types';
+import { DEFAULT_AURELIA_OPTIONS, MARKER_JSON_ITEM } from './constants';
 import { encodeQuotes } from '../vue/helpers';
 import { stripStateAndProps } from './helpers';
 
-interface ImportData {
-  name: string;
-  path: string;
-}
-
 const BUILT_IN_COMPONENTS = new Set(['Show', 'For', 'Fragment', 'Slot']);
-const DEBUG = false;
 const IS_DEV = true;
 
 enum BuiltInEnums {
@@ -582,31 +578,20 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       componentsUsed,
       importMapper: options?.importMapper,
     });
-    const aureliaImports = rawAureliaImports.split(IMPORT_MARKER);
-    const [jsExports, ...otherMapped] = aureliaImports;
-    const importedVars = json.imports?.flatMap((imported) => {
-      /**
-       * `import { Builder as AST } from '@builder.io/sdk';`
-       * -->
-       * AST
-       */
-      // imported.imports; /*?*/
-      // imported.path; /*?*/
+    // rawAureliaImports; /*?*/
+    const aureliaImports = rawAureliaImports.split(MARKER_JSON_ITEM);
+    // aureliaImports; /*?*/
+    const [jsExports, ...jsOrTemplateImports] = aureliaImports.reverse();
+    // jsExports; /*?*/
+    // otherMapped; /*?*/
+    const importedVars_1 = jsOrTemplateImports.reduce((acc, aureliaImport) => {
+      const toParse = aureliaImport.trim();
+      if (toParse === '') return acc;
 
-      const _importedVars = Object.keys(imported.imports);
-      const resultArray = _importedVars.map((importedVar) => {
-        return {
-          name: importedVar,
-          path: imported.path,
-        };
-      });
-      // const resultArray = [];
-      // Object.entries(imported.imports).forEach((importedVar) => {
-      //   importedVar;
-      // });
-      return resultArray;
-    });
-
+      const importData = JSON.parse(toParse ?? '{}');
+      acc.push(importData);
+      return acc;
+    }, [] as ImportData[]);
     const spreadCollector: string[] = [];
     /**
      * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
@@ -627,30 +612,53 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ...localExportVars,
     ];
     const templateBody = assembleTemplateBody(json, options, spreadCollector, allClassVars);
-    const customElementsImports = importedVars.filter((variable) => {
+
+    const customElementsImports: ImportData[] = [];
+    const rawJsImports: ImportData[] = [];
+    importedVars_1.forEach((variable) => {
       const nameConvention = kebabCase(variable.name);
       const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
       const used = templateBody.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
-      return used;
+
+      if (used) {
+        customElementsImports.push(variable);
+        return;
+      }
+
+      rawJsImports.push(variable);
     });
 
-    const usedAsClassVars = importedVars.filter((variable) => {
-      const usedInTemplate = templateBody.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
-      const usedAsClassVar = customElementsImports.includes(variable);
-      const used = usedInTemplate && !usedAsClassVar;
+    const usedAsClassVars: string[] = [];
+    importedVars_1.forEach((variable) => {
+      const importedVars = Object.keys(variable.imports);
+      const usedInTemplate = importedVars.find((importedVarName) => {
+        const included = templateBody.includes(importedVarName); // TODO Find a more precise way to deterimne whether a var was used
+
+        if (included) {
+          usedAsClassVars.push(importedVarName);
+        }
+
+        return included;
+      });
+      const usedAsClassVar = customElementsImports.find((customElementsImport) => {
+        const usedAsCustomElement = importedVars.find((importedVarName) => {
+          const included = customElementsImport.jsPath.includes(importedVarName);
+          return included;
+        });
+        return usedAsCustomElement;
+      });
+      const used = !!usedInTemplate && !usedAsClassVar;
       return used;
     });
+    // usedAsClassVars; /*?*/
     const assignImportedVars = Array.from(
-      new Set([
-        ...usedAsClassVars.map((variable) => variable.name),
-        ...customImports,
-        ...localExportVars,
-      ]),
+      new Set([...usedAsClassVars, ...customImports, ...localExportVars]),
     ).filter((importedVar) => {
       const isCustomElement = customElementsImports.find((element) => element.name === importedVar);
       const dontAssignWhenCustomElement = !isCustomElement;
       return dontAssignWhenCustomElement;
     });
+    // assignImportedVars; /*?*/
 
     const importKeyword = getTemplateImportName();
     const templateImports = assembleTemplateImports(
@@ -658,12 +666,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       customElementsImports,
       importKeyword,
     );
-
-    const jsImports: string[] = [];
-    otherMapped.forEach((mapped) => {
-      const [_, jsImport] = mapped.split(MARKER_JS_MAPPED);
-      jsImports.push(jsImport.trim());
-    });
 
     let templateContent = '';
 
@@ -806,17 +808,18 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     str += '\n';
     str += '\n';
 
-    if (jsImports.length) {
-      str += jsImports.join('');
-
-      if (DEBUG) {
-        str += '--[[jsImports]]--';
-      }
-
+    if (rawJsImports.length) {
+      const jsImports = rawJsImports.map((raw) => raw.jsPath);
+      str += jsImports.join('\n');
       str += '\n';
       str += '\n';
     }
+    if (DEBUG) {
+      str += '// --[[jsImports]]--';
+      str += '\n';
+    }
 
+    // jsExports; /*?*/
     if (jsExports.trim().length) {
       str += jsExports;
       if (DEBUG) {

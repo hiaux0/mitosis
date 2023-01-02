@@ -434,7 +434,7 @@ export class MyPreviousComponent {
 
   private _prevCount = this.count;
 
-  @computedFrom()
+  @computedFrom(\\"count\\")
   get propertyObserver() {
     this._prevCount = this.count;
 
@@ -2248,7 +2248,7 @@ export class OnUpdateWithDeps {
   a = \\"a\\";
   b = \\"b\\";
 
-  @computedFrom()
+  @computedFrom(\\"a\\", \\"b\\", \\"size\\")
   get propertyObserver() {
     console.log(
       \\"Runs when this.a, this.b or size changes\\",
@@ -2489,7 +2489,7 @@ export class RenderContent {
     this.setContext();
   }
 
-  @computedFrom()
+  @computedFrom(\\"content\\")
   get propertyObserver() {
     dispatchNewContentToVisualEditor(this.content);
 

@@ -748,7 +748,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const shouldAddConstructor = hasConstructor || !!setContextCodeResult;
 
     const shouldAddAttached =
-      hasConstructor || !!callSetContextCodeResultMethod || !!callGetContextCodeResultMethod;
+      hasConstructor ||
+      !!callSetContextCodeResultMethod ||
+      !!callGetContextCodeResultMethod ||
+      hasOnMount;
 
     let str = '';
 

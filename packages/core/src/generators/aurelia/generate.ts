@@ -637,7 +637,8 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       json = runPreJsonPlugins(json, options.plugins);
     }
 
-    const [forwardProp, hasPropRef] = getPropsRef(json, true);
+    const [forwardProp, hasPropRef] = getPropsRef(json, false); // angular had `true`
+
     const propsTypeRef = json.propsTypeRef !== 'any' ? json.propsTypeRef : undefined;
 
     const injectables: string[] = contextVars.map((variableName) => {

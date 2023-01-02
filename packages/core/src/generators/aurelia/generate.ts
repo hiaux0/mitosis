@@ -100,6 +100,7 @@ interface AureliaBlockOptions {
   indexNameTracker?: string[];
   /** Aurelia needs to explicitly set the eg. React props as @bindable */
   spreadCollector?: string[];
+  allClassVars?: string[];
 }
 
 const mappers: {
@@ -156,6 +157,7 @@ export const blockToAurelia = (
     callLocation: CallLocation.Start,
     indexNameTracker: [],
     spreadCollector: [],
+    allClassVars: [],
   },
 ): string => {
   // blockOptions.callLocation; /*?*/
@@ -317,7 +319,7 @@ export const blockToAurelia = (
         const replacer = '$1$event$2';
         // Step: toggle($event)
         const replaced = code.replace(regexp, replacer);
-        const finalValue = removeSurroundingBlock(replaced);
+        let finalValue = removeSurroundingBlock(replaced);
 
         // Step: Input Checkbox
         // Step: Input Radio
@@ -325,7 +327,15 @@ export const blockToAurelia = (
         // json.bindings.checked; /*?*/
         if (isRadioOrCheckbox()) {
           // Step: Event attribute
-          str += ` ${event}.delegate="${indent(finalValue)}()" `;
+          const shouldBeCalled = blockOptions.allClassVars?.find(
+            (varName) => varName === finalValue,
+          );
+
+          if (shouldBeCalled) {
+            finalValue += `()`;
+          }
+
+          str += ` ${event}.delegate="${indent(finalValue)}" `;
 
           if (DEBUG) {
             str += '--[[.delegate]]--';
@@ -348,7 +358,7 @@ export const blockToAurelia = (
         const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
         needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
       } else if (BINDINGS_MAPPER[key]) {
-        str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code)}"  `;
+        str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code, 2)}"  `;
 
         if (DEBUG) {
           str += '--[[BINDINGS_MAPPER[key]]]--';
@@ -391,7 +401,10 @@ export const blockToAurelia = (
       // str; /*?*/
       str += json.children
         .map((item) =>
-          blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Children }),
+          blockToAurelia(item, options, {
+            ...blockOptions,
+            callLocation: CallLocation.Children,
+          }),
         )
         .join('\n');
     }
@@ -595,14 +608,6 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     const spreadCollector: string[] = [];
-    const templateBody = assembleTemplateBody(json, options, spreadCollector);
-    const customElementsImports = importedVars.filter((variable) => {
-      const nameConvention = kebabCase(variable.name);
-      const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
-      const used = templateBody.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
-      return used;
-    });
-
     /**
      * TODO: Could changed assumption made in getCustomImports, because it ignores valuse ,that Aurelia needs, eg
      * `import { Builder } from '@builder.io/sdk';`
@@ -613,6 +618,22 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     const localExportVars = Object.keys(localExports).filter(
       (key) => localExports[key].usedInLocal,
     );
+    const allClassVars = [
+      ...contextVars,
+      ...outputVars,
+      ...Array.from(domRefs),
+      ...stateVars,
+      ...customImports,
+      ...localExportVars,
+    ];
+    const templateBody = assembleTemplateBody(json, options, spreadCollector, allClassVars);
+    const customElementsImports = importedVars.filter((variable) => {
+      const nameConvention = kebabCase(variable.name);
+      const closingTag = `</${nameConvention}>`; // Assumption: Every custom element used has a closing tag
+      const used = templateBody.includes(closingTag); // TODO Find a more precise way to deterimne whether a var was used
+      return used;
+    });
+
     const usedAsClassVars = importedVars.filter((variable) => {
       const usedInTemplate = templateBody.includes(variable.name); // TODO Find a more precise way to deterimne whether a var was used
       const usedAsClassVar = customElementsImports.includes(variable);
@@ -663,7 +684,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     }
 
     if (IS_DEV) {
-      finalTemplate += 'test';
+      finalTemplate += '\n  test\n';
     }
 
     finalTemplate += indent(templateContent, 2);
@@ -922,6 +943,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
           };`;
         })
         .join('\n')}
+      ${DEBUG ? '// --[[classAssignment]]--' : ''}
 
       ${
         shouldAddConstructor
@@ -1048,6 +1070,7 @@ function assembleTemplateBody(
   json: MitosisComponent,
   options: ToAureliaOptions,
   spreadCollector: string[],
+  allClassVars: string[],
 ): string {
   const childComponents: string[] = [];
   json.imports.forEach(({ imports }) => {
@@ -1075,6 +1098,7 @@ function assembleTemplateBody(
         childComponents,
         callLocation: CallLocation.ChildrenForTemplate,
         spreadCollector,
+        allClassVars,
       }),
     )
     .join('\n  ');

@@ -335,7 +335,7 @@ export const blockToAurelia = (
             finalValue += `()`;
           }
 
-          str += ` ${event}.delegate="${indent(finalValue)}" `;
+          str += ` ${event}.delegate="${indent(finalValue, 2)}"`;
 
           if (DEBUG) {
             str += '--[[.delegate]]--';
@@ -374,7 +374,7 @@ export const blockToAurelia = (
             str += ` ${key}.bind="$index" `;
           } else {
             // Step: Attribute binding
-            str += ` ${key}.bind="${indent(code)}" `;
+            str += ` ${key}.bind="${indent(code, 2)}" `;
             if (DEBUG) {
               str += '--[[Attribute1]]--';
             }
@@ -1057,7 +1057,7 @@ function assembleTemplateImports(
 
   // Step: Template imports
   if (otherMapped) {
-    template += templateImports.join('');
+    template += templateImports.join('\n');
     if (DEBUG) {
       template += '--[[TemplateImports]]--';
     }

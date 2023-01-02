@@ -803,7 +803,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     });
 
     str += `${importFromAureliaFramework.join(', ')}`;
-    str += ' } from "aurelia-framework"';
+    str += ' } from "aurelia-framework";';
 
     str += '\n';
     str += '\n';

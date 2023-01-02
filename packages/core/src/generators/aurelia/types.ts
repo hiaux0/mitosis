@@ -12,6 +12,7 @@ interface AureliaVersionOpt {
 
 export interface ToAureliaOptions extends BaseTranspilerOptions, AureliaVersionOpt {
   importMapper?: Function;
+  addWorkaround?: boolean;
   // cssNamespace?: () => string;
   // namePrefix?: (path: string) => string;
   // asyncComponentImports?: boolean;

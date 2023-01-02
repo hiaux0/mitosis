@@ -177,7 +177,12 @@ export const blockToAurelia = (
   if (textCode) {
     let result = '';
     if (isSlotProperty(textCode)) {
-      const selector = pipe(textCode, stripSlotPrefix, kebabCase);
+      let selector;
+      if (DEBUG) {
+        selector = pipe(textCode, stripSlotPrefix);
+      } else {
+        selector = pipe(textCode, stripSlotPrefix, kebabCase);
+      }
       result = '';
       result += `<slot name="${selector}"></slot>`;
       if (DEBUG) {
@@ -232,21 +237,57 @@ export const blockToAurelia = (
       .join('\n');
     str += `</${AureliaKeywords.Tempalte}>`;
   } else if (json.name === BuiltInEnums.Show) {
-    str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    const isTemplateWorkaround =
+      isSlotProperty(json.bindings.when?.code ?? '') && isAureliaV1() && options.addWorkaround;
+    if (isTemplateWorkaround) {
+      // Workaround: Slot inside template does not work in Aurelia 1
+      str += `<!-- [Workaround100.Start] -->`;
+    } else {
+      str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.If}.bind="${json.bindings.when?.code}">`;
+    }
+
+    if (DEBUG) {
+      str += '\n';
+      str += '--[[if.bind]]--';
+    }
     str += json.children
       .map((item) => {
         return blockToAurelia(item, options, { ...blockOptions, callLocation: CallLocation.Show });
       })
       .join('\n');
-    str += `</${AureliaKeywords.Tempalte}>`;
+
+    if (isTemplateWorkaround) {
+      // Workaround: Slot inside template does not work in Aurelia 1
+      str += `<!-- [Workaround100.End] -->`;
+    } else {
+      str += `</${AureliaKeywords.Tempalte}>`;
+    }
 
     if (isMitosisNode(json.meta.else)) {
-      str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.Else}>
-      ${blockToAurelia(json.meta.else, options, {
+      if (isTemplateWorkaround) {
+        // Workaround: Slot inside template does not work in Aurelia 1
+        str += `<!-- [Workaround101.Start] -->`;
+      } else {
+        str += `<${AureliaKeywords.Tempalte} ${AureliaKeywords.Else}>\n`;
+      }
+
+      str += blockToAurelia(json.meta.else, options, {
         ...blockOptions,
         callLocation: CallLocation.Else,
-      })}
-      </${AureliaKeywords.Tempalte}>`;
+      });
+      str += '\n';
+
+      if (isTemplateWorkaround) {
+        // Workaround: Slot inside template does not work in Aurelia 1
+        str += `<!-- [Workaround101.End] -->`;
+      } else {
+        str += `</${AureliaKeywords.Tempalte}>`;
+      }
+
+      if (DEBUG) {
+        str += '\n';
+        str += '--[[else]]--';
+      }
     }
   } else {
     // json.name; /*?*/
@@ -356,8 +397,12 @@ export const blockToAurelia = (
           str += '--[[ref]]--';
         }
       } else if (isSlotProperty(key)) {
-        const lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
-        needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` ${lowercaseKey}>`)}`);
+        let lowercaseKey = pipe(key, stripSlotPrefix, (x) => x.toLowerCase());
+
+        if (DEBUG) {
+          lowercaseKey += '--[[slotKey]]--';
+        }
+        needsToRenderSlots.push(`${code.replace(/(\/\>)|\>/, ` slot="${lowercaseKey}">`)}`);
       } else if (BINDINGS_MAPPER[key]) {
         str += ` ${BINDINGS_MAPPER[key]}.bind="${indent(code, 2)}"  `;
 
@@ -423,6 +468,11 @@ export const blockToAurelia = (
     return (
       json.properties.type !== BuiltInEnums.Radio && json.properties.type !== BuiltInEnums.Checkbox
     );
+  }
+
+  function isAureliaV1() {
+    const is = options.aureliaVersion === AureliaV1;
+    return is;
   }
 };
 
@@ -507,7 +557,10 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
                 outputVars,
                 domRefs: [], // the template doesn't need the this keyword.
               })(code);
-              const result = newLocal.replace(/"/g, '&quot;');
+              let result = newLocal.replace(/"/g, '&quot;');
+              if (DEBUG) {
+                result += '--[[bindings]]--';
+              }
               return result;
             };
           case 'hooks-deps':
@@ -1114,10 +1167,9 @@ function assembleTemplateBody(
   // Step: onUpdate
   if (json.hooks.onUpdate) {
     template += '${propertyObserver}';
-
-    if (DEBUG) {
-      template += '--[[onUpdate]]--';
-    }
+  }
+  if (DEBUG) {
+    template += '--[[onUpdate]]--';
   }
 
   // Step: Styles
@@ -1127,9 +1179,9 @@ function assembleTemplateBody(
     template += '<style>';
     template += css;
     template += '</style>';
-    if (DEBUG) {
-      template += '--[[Styles]]--';
-    }
+  }
+  if (DEBUG) {
+    template += '--[[Styles]]--';
   }
 
   // Prettier

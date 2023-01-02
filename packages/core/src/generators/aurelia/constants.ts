@@ -9,6 +9,7 @@ export const MARKER_JSON_ITEM = '[[JSON_MARKER]]';
 
 export const DEFAULT_AURELIA_OPTIONS: ToAureliaOptions = {
   aureliaVersion: DEFAULT_AURELIA_VERSION,
+  addWorkaround: false,
 
   importMapper: (
     // ...args

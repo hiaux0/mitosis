@@ -206,8 +206,6 @@ export class MyComponent {}
 exports[`Aurelia > jsx > Typescript Test > BasicBooleanAttribute 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
-import MyBooleanAttributeComponent from \\"./basic-boolean-attribute-component.raw\\";
-
 type Props = {
   children: any;
   type: string;
@@ -248,15 +246,13 @@ export class MyBooleanAttribute {
 exports[`Aurelia > jsx > Typescript Test > BasicChildComponent 1`] = `
 "import { customElement, inlineView } from \\"aurelia-framework\\";
 
-import MyBasicComponent from \\"./basic.raw\\";
-import MyBasicOnMountUpdateComponent from \\"./basic-onMount-update.raw\\";
-
 @customElement(\\"my-component\\")
 @inlineView(\`
   <template>
     test
-    <require from=\\"./basic.raw\\"></require>
+
     <require from=\\"./basic-onMount-update.raw\\"></require>
+    <require from=\\"./basic.raw\\"></require>
 
     <div>
       <my-basic-component id.bind=\\"dev\\"></my-basic-component>
@@ -291,7 +287,7 @@ exports[`Aurelia > jsx > Typescript Test > BasicFor 1`] = `
           value.bind=\\"name\\"
           input.delegate=\\"
         name = $event.target.value + ' and ' + person;
-  \\"
+    \\"
         />
 
         Hello \\\\\${person} ! I can run in Qwik, Web Component, React, Vue, Solid, or
@@ -1063,8 +1059,8 @@ export class SelectComponent {
 exports[`Aurelia > jsx > Typescript Test > Stamped.io 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
-import { kebabCase } from \\"lodash\\";
 import { snakeCase } from \\"lodash\\";
+import { kebabCase } from \\"lodash\\";
 
 type SmileReviewsProps = {
   productId: string;
@@ -1094,7 +1090,7 @@ type SmileReviewsProps = {
           click.delegate=\\"
         $event.preventDefault();
         showReviewPrompt = false;
-  \\"
+    \\"
         >
           Submit
         </button>
@@ -1655,8 +1651,6 @@ export class MyComponent {
 exports[`Aurelia > jsx > Typescript Test > import types 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
-import RenderBlock from \\"./builder-render-block.raw\\";
-
 type RenderContentProps = {
   options?: GetContentOptions;
   content: BuilderContent;
@@ -2060,13 +2054,12 @@ import {
   inlineView,
 } from \\"aurelia-framework\\";
 
+import BuilderContext from \\"@dummy/context\\";
 import {
   sendComponentsToVisualEditor,
   dispatchNewContentToVisualEditor,
   trackClick,
 } from \\"@dummy/injection-js\\";
-import BuilderContext from \\"@dummy/context\\";
-import RenderBlocks from \\"@dummy/RenderBlocks.lite.tsx\\";
 
 type Props = {
   customComponents: string[];
@@ -2276,12 +2269,11 @@ export class MyBasicComponent {
 exports[`Aurelia > jsx > Typescript Test > subComponent 1`] = `
 "import { customElement, inlineView } from \\"aurelia-framework\\";
 
-import Foo from \\"./foo-sub-component\\";
-
 @customElement(\\"my-component\\")
 @inlineView(\`
   <template>
     test
+
     <require from=\\"./foo-sub-component\\"></require>
 
     <foo></foo>

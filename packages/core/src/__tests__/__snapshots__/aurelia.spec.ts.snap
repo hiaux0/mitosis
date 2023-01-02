@@ -46,21 +46,22 @@ export class MyBasicComponent {
 `;
 
 exports[`Aurelia > jsx > Typescript Test > Basic Context 1`] = `
-"import { customElement, inlineView } from \\"aurelia-framework\\";
+"import { EventAggregator } from \\"aurelia-event-aggregator\\";
+import { autoinject, customElement, inlineView } from \\"aurelia-framework\\";
 
 import { Injector, createInjector, MyService } from \\"@dummy/injection-js\\";
 
+@autoinject
 @customElement(\\"my-component\\")
 @inlineView(\`
   <template>
     test
-    <require from=\\"@dummy/injection-js\\"></require>
 
     <div>
-      \\\\\${myService.method('hello') + name} Hello! I can run in React, Vue, Solid,
-      or Liquid!
+      \\\\\${myService.method('hello') + name} Hello! I can run in React, Vue, Solid, or
+      Liquid!
 
-      <input input.delegate=\\"onChange\\" />
+      <input input.delegate=\\"onChange()\\" />
     </div>
   </template>
 \`)
@@ -71,7 +72,10 @@ export class MyBasicComponent {
     console.log(change);
   };
 
-  constructor(public myService: MyService) {
+  constructor(
+    private eventAggregator: EventAggregator,
+    public myService: MyService
+  ) {
     const hi = this.myService.method(\\"hi\\");
     console.log(hi);
   }
@@ -79,6 +83,20 @@ export class MyBasicComponent {
   attached() {
     const bye = this.myService.method(\\"hi\\");
     console.log(bye);
+
+    this.getContext();
+
+    this.setContext();
+  }
+
+  getContext() {
+    this.eventAggregator.subscribe(MyService.key, (payload) => {
+      this.myService = payload;
+    });
+  }
+
+  setContext() {
+    this.eventAggregator.publish(Injector, createInjector());
   }
 }
 "
@@ -199,6 +217,7 @@ type Props = {
 @inlineView(\`
   <template>
     test
+
     <require from=\\"./basic-boolean-attribute-component.raw\\"></require>
 
     <div>
@@ -865,7 +884,6 @@ export interface ImgProps {
 @inlineView(\`
   <template>
     test
-    <require from=\\"@builder.io/sdk\\"></require>
 
     <img
       style.bind=\\"{
@@ -910,7 +928,6 @@ export interface FormInputProps {
 @inlineView(\`
   <template>
     test
-    <require from=\\"@builder.io/sdk\\"></require>
 
     <input
       spreadProps.bind=\\"attributes\\"
@@ -1015,7 +1032,6 @@ export interface FormSelectProps {
 @inlineView(\`
   <template>
     test
-    <require from=\\"@builder.io/sdk\\"></require>
 
     <select
       spreadProps.bind=\\"attributes\\"
@@ -1059,8 +1075,6 @@ type SmileReviewsProps = {
 @inlineView(\`
   <template>
     test
-    <require from=\\"lodash\\"></require>
-    <require from=\\"lodash\\"></require>
 
     <div data-user.bind=\\"name\\">
       <button click.delegate=\\"showReviewPrompt = true\\">Write a review</button>
@@ -1196,7 +1210,6 @@ export interface TextProps {
 @inlineView(\`
   <template>
     test
-    <require from=\\"@builder.io/sdk\\"></require>
 
     <div
       contentEditable.bind=\\"allowEditingText || undefined\\"
@@ -1436,15 +1449,21 @@ export class ClassNameCode {
 `;
 
 exports[`Aurelia > jsx > Typescript Test > contentState 1`] = `
-"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+"import { EventAggregator } from \\"aurelia-event-aggregator\\";
+import {
+  autoinject,
+  bindable,
+  customElement,
+  inlineView,
+} from \\"aurelia-framework\\";
 
 import BuilderContext from \\"@dummy/context\\";
 
+@autoinject
 @customElement(\\"my-component\\")
 @inlineView(\`
   <template>
     test
-    <require from=\\"@dummy/context\\"></require>
 
     <div>setting context</div>
   </template>
@@ -1452,6 +1471,19 @@ import BuilderContext from \\"@dummy/context\\";
 export class RenderContent {
   @bindable() content: any;
   @bindable() customComponents: any;
+
+  constructor(private eventAggregator: EventAggregator) {}
+
+  attached() {
+    this.setContext();
+  }
+
+  setContext() {
+    this.eventAggregator.publish(BuilderContext.key, {
+      content: this.content,
+      registeredComponents: this.customComponents,
+    });
+  }
 }
 "
 `;
@@ -1635,6 +1667,7 @@ type RenderContentProps = {
 @inlineView(\`
   <template>
     test
+
     <require from=\\"./builder-render-block.raw\\"></require>
 
     <render-block></render-block>
@@ -2018,7 +2051,9 @@ export class OnUpdate {
 `;
 
 exports[`Aurelia > jsx > Typescript Test > renderContentExample 1`] = `
-"import {
+"import { EventAggregator } from \\"aurelia-event-aggregator\\";
+import {
+  autoinject,
   bindable,
   customElement,
   computedFrom,
@@ -2041,12 +2076,12 @@ type Props = {
   };
 };
 
+@autoinject
 @customElement(\\"my-component\\")
 @inlineView(\`
   <template>
     test
-    <require from=\\"@dummy/injection-js\\"></require>
-    <require from=\\"@dummy/context\\"></require>
+
     <require from=\\"@dummy/RenderBlocks.lite.tsx\\"></require>
 
     <div class=\\"div\\" click.delegate=\\"trackClick(content.id)\\">
@@ -2068,8 +2103,12 @@ export class RenderContent {
 
   trackClick = trackClick;
 
+  constructor(private eventAggregator: EventAggregator) {}
+
   attached() {
     sendComponentsToVisualEditor(this.customComponents);
+
+    this.setContext();
   }
 
   @computedFrom()
@@ -2077,6 +2116,18 @@ export class RenderContent {
     dispatchNewContentToVisualEditor(this.content);
 
     return;
+  }
+
+  setContext() {
+    this.eventAggregator.publish(BuilderContext.key, {
+      get content() {
+        return 3;
+      },
+
+      get registeredComponents() {
+        return 4;
+      },
+    });
   }
 }
 "

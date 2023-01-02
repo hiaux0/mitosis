@@ -561,6 +561,65 @@ export class Column {
 "
 `;
 
+exports[`Aurelia > jsx > Typescript Test > ContentSlotHtml 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string | JSX.Element;
+  slotTesting: JSX.Element;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <slot name=\\"testing\\"></slot>
+
+      <div>
+        <hr />
+      </div>
+
+      <div>
+        <slot></slot>
+      </div>
+    </div>
+  </template>
+\`)
+export class ContentSlotCode {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > ContentSlotJSX 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string | JSX.Element;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <template if.bind=\\"slotTesting\\">
+        <div><slot name=\\"testing\\"></slot></div>
+      </template>
+
+      <div>
+        <hr />
+      </div>
+
+      <div><slot></slot></div>
+    </div>
+  </template>
+\`)
+export class ContentSlotJsxCode {}
+"
+`;
+
 exports[`Aurelia > jsx > Typescript Test > CustomCode 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
@@ -1056,6 +1115,102 @@ export class SelectComponent {
 "
 `;
 
+exports[`Aurelia > jsx > Typescript Test > SlotDefault 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <slot>
+        <div class=\\"default-slot\\">Default content</div>
+      </slot>
+    </div>
+  </template>
+\`)
+export class SlotCode {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > SlotHtml 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <require from=\\"./content-slot-jsx.raw\\"></require>
+
+    <div>
+      <content-slot-code>
+        <slot><div>Hello</div></slot>
+      </content-slot-code>
+    </div>
+  </template>
+\`)
+export class SlotCode {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > SlotJsx 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <require from=\\"./content-slot-jsx.raw\\"></require>
+
+    <div>
+      <content-slot-code><div slot=\\"testing\\">Hello</div></content-slot-code>
+    </div>
+  </template>
+\`)
+export class SlotCode {}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > SlotNamed 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+type Props = {
+  [key: string]: string;
+};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <slot name=\\"top\\"></slot>
+
+      <slot name=\\"left\\">Default left</slot>
+
+      <slot>Default Child</slot>
+    </div>
+  </template>
+\`)
+export class SlotCode {}
+"
+`;
+
 exports[`Aurelia > jsx > Typescript Test > Stamped.io 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
@@ -1440,6 +1595,34 @@ type Props = {
 \`)
 export class ClassNameCode {
   bindings = \\"a binding\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > classState 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div class=\\"\\\\\${classState + ' div'}\\" style.bind=\\"styleState\\">
+      Hello! I can run in React, Vue, Solid, or Liquid!
+    </div>
+
+    <style>
+      .div {
+        padding: 10px;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicComponent {
+  classState = \\"testClassName\\";
+  styleState = {
+    color: \\"red\\",
+  };
 }
 "
 `;
@@ -2417,5 +2600,409 @@ exports[`Aurelia > jsx > Typescript Test > use-style-outside-component 1`] = `
   </template>
 \`)
 export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > basic 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input input.delegate=\\"name = $event.target.value\\" value.bind=\\"name\\" />
+
+      Hello! I can run in React, Vue, Solid, or Liquid!
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  name = \\"Steve\\";
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > bindGroup 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input type=\\"radio\\" value=\\"Plain\\" checked.bind=\\"tortilla\\" />
+      <input type=\\"radio\\" value=\\"Whole wheat\\" checked.bind=\\"tortilla\\" />
+      <input type=\\"radio\\" value=\\"Spinach\\" checked.bind=\\"tortilla\\" />
+      <br />
+      <br />
+      <input type=\\"checkbox\\" value=\\"Rice\\" checked.bind=\\"fillings\\" />
+      <input type=\\"checkbox\\" value=\\"Beans\\" checked.bind=\\"fillings\\" />
+      <input type=\\"checkbox\\" value=\\"Cheese\\" checked.bind=\\"fillings\\" />
+      <input type=\\"checkbox\\" value=\\"Guac (extra)\\" checked.bind=\\"fillings\\" />
+      <p>Tortilla: \\\\\${tortilla}</p>
+      <p>Fillings: \\\\\${fillings}</p>
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  tortilla = \\"Plain\\";
+  fillings = [];
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > bindProperty 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input value.bind=\\"value\\" />
+  </template>
+\`)
+export class MyComponent {
+  value = \\"hello\\";
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > classDirective 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+const defaultProps = {};
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input
+      class=\\"\\\\\${\\\\\`form-input \\\\\${disabled ? 'disabled' : ''} \\\\\${focus ? 'focus' : ''}\\\\\`}\\"
+    />
+  </template>
+\`)
+export class MyComponent {
+  @bindable() disabled: any;
+
+  focus = true;
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > context 1`] = `
+"import { EventAggregator } from \\"aurelia-event-aggregator\\";
+import { autoinject, customElement, inlineView } from \\"aurelia-framework\\";
+
+@autoinject
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>\\\\\${activeTab}</div>
+  </template>
+\`)
+export class MyComponent {
+  activeTab = 0;
+
+  constructor(
+    private eventAggregator: EventAggregator,
+    public disabled: \\"disabled\\"
+  ) {}
+
+  attached() {
+    this.getContext();
+
+    this.setContext();
+  }
+
+  getContext() {
+    this.eventAggregator.subscribe(\\"disabled\\".key, (payload) => {
+      this.disabled = payload;
+    });
+  }
+
+  setContext() {
+    this.eventAggregator.publish(\\"activeTab\\", this.activeTab);
+  }
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > each 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <ul>
+      <template repeat.for=\\"num of numbers\\"><li>\\\\\${num}</li></template>
+    </ul>
+  </template>
+\`)
+export class MyComponent {
+  numbers = [\\"one\\", \\"two\\", \\"three\\"];
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > eventHandlers 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <button click.delegate=\\"log('hi')\\">Log</button>
+      <button click.delegate=\\"log($event)\\">Log</button>
+      <button click.delegate=\\"log($event)\\">Log</button>
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  log = function log(msg = \\"hello\\") {
+    console.log(msg);
+  };
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > html 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div innerHTML.bind=\\"html\\"></div>
+  </template>
+\`)
+export class MyComponent {
+  html = \\"<b>bold</b>\\";
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > ifElse 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <template if.bind=\\"show\\">
+      <button click.delegate=\\"toggle($event)\\">Hide</button>
+    </template>
+    <template else>
+      <button click.delegate=\\"toggle($event)\\">Show</button>
+    </template>
+  </template>
+\`)
+export class MyComponent {
+  show = true;
+  toggle = function toggle() {
+    this.show = !this.show;
+  };
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > imports 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <require from=\\"./Button\\"></require>
+
+    <div>
+      <button type=\\"button\\" disabled.bind=\\"disabled\\">
+        <slot></slot>
+      </button>
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  disabled = false;
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > lifecycleHooks 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class MyComponent {
+  attached() {
+    console.log(\\"onMount\\");
+  }
+
+  @computedFrom()
+  get propertyObserver() {
+    console.log(\\"onAfterUpdate\\");
+
+    return;
+  }
+
+  detached() {
+    console.log(\\"onDestroy\\");
+  }
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > reactive 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input value.bind=\\"name\\" />
+
+      Lowercase: \\\\\${lowercaseName}
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  name = \\"Steve\\";
+  get lowercaseName() {
+    return this.name.toLowerCase();
+  }
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > reactiveWithFn 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input
+        type=\\"number\\"
+        input.delegate=\\"a = $event.target.value\\"
+        value.bind=\\"a\\"
+      />
+      <input
+        type=\\"number\\"
+        input.delegate=\\"b = $event.target.value\\"
+        value.bind=\\"b\\"
+      />
+
+      Result: \\\\\${result}
+    </div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class MyComponent {
+  a = 2;
+  b = 5;
+  result = null;
+  calculateResult = function calculateResult(a_, b_) {
+    this.result = a_ * b_;
+  };
+
+  @computedFrom(\\"a\\", \\"b\\")
+  get propertyObserver() {
+    this.calculateResult(this.a, this.b);
+
+    return;
+  }
+}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > slots 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <slot>default</slot>
+
+      <slot name=\\"test\\"><div>default</div></slot>
+    </div>
+  </template>
+\`)
+export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > style 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <input class=\\"form-input\\" />
+
+    <style>
+      input {
+        color: red;
+        font-size: 12px;
+      }
+
+      .form-input:focus {
+        outline: 1px solid blue;
+      }
+    </style>
+  </template>
+\`)
+export class MyComponent {}
+"
+`;
+
+exports[`Aurelia > svelte > Typescript Test > textExpressions 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      normal: \\\\\${a + b}
+      <br />
+
+      conditional \\\\\${a > 2 ? 'hello' : 'bye'}
+    </div>
+  </template>
+\`)
+export class MyComponent {
+  a = 5;
+  b = 12;
+}
 "
 `;

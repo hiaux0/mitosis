@@ -621,7 +621,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
               })(code);
               let result = newLocal.replace(/"/g, '&quot;');
               if (DEBUG) {
-                result += '--[[bindings]]--';
+                result += ' // --[[bindings]]--';
               }
               return result;
             };
@@ -732,7 +732,12 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ...customImports,
       ...localExportVars,
     ];
-    const templateBody = assembleTemplateBody(json, options, spreadCollector, allClassVars);
+    let templateBody = '';
+    try {
+      templateBody = assembleTemplateBody(json, options, spreadCollector, allClassVars);
+    } catch (error) {
+      console.error(error);
+    }
 
     const customElementsImports: ImportData[] = [];
     const rawJsImports: ImportData[] = [];
@@ -1044,7 +1049,7 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
       ${outputs.join('\n')}
 
       ${Array.from(domRefs)
-        .map((refName) => `${refName}: HTMLElement`)
+        .map((refName) => `${stripStateAndPropsRefs(refName)}: HTMLElement`)
         .join('\n')}
       ${DEBUG ? '// --[[vmref]]--' : ''}
 

@@ -1508,6 +1508,80 @@ export class MyComponent {
 "
 `;
 
+exports[`Aurelia > jsx > Typescript Test > basicForwardRef 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface Props {
+  showInput: boolean;
+  inputRef: HTMLInputElement;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input
+        class=\\"input\\"
+        ref=\\"inputRef\\"
+        value.bind=\\"name\\"
+        input.delegate=\\"name = $event.target.value\\"
+      />
+    </div>
+
+    <style>
+      .input {
+        color: red;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicForwardRefComponent {
+  inputRef: HTMLElement;
+
+  name = \\"PatrickJS\\";
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > basicForwardRefMetadata 1`] = `
+"import { customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface Props {
+  showInput: boolean;
+  inputRef: HTMLInputElement;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div>
+      <input
+        class=\\"input\\"
+        ref=\\"inputRef\\"
+        value.bind=\\"name\\"
+        input.delegate=\\"name = $event.target.value\\"
+      />
+    </div>
+
+    <style>
+      .input {
+        color: red;
+      }
+    </style>
+  </template>
+\`)
+export class MyBasicForwardRefComponent {
+  inputRef: HTMLElement;
+
+  name = \\"PatrickJS\\";
+}
+"
+`;
+
 exports[`Aurelia > jsx > Typescript Test > class + ClassName + css 1`] = `
 "import { customElement, inlineView } from \\"aurelia-framework\\";
 
@@ -1623,6 +1697,64 @@ export class MyBasicComponent {
   styleState = {
     color: \\"red\\",
   };
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > componentWithContext 1`] = `
+"import { EventAggregator } from \\"aurelia-event-aggregator\\";
+import {
+  autoinject,
+  bindable,
+  customElement,
+  inlineView,
+} from \\"aurelia-framework\\";
+
+import Context2 from \\"@dummy/2\\";
+import Context1 from \\"@dummy/1\\";
+
+export interface ComponentWithContextProps {
+  content: string;
+}
+
+@autoinject
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    \\\\\${foo.value}
+  </template>
+\`)
+export class ComponentWithContext {
+  @bindable() content: ComponentWithContextProps[\\"content\\"];
+
+  constructor(private eventAggregator: EventAggregator, public foo: Context1) {}
+
+  attached() {
+    this.getContext();
+
+    this.setContext();
+  }
+
+  getContext() {
+    this.eventAggregator.subscribe(Context1.key, (payload) => {
+      this.foo = payload;
+    });
+  }
+
+  setContext() {
+    this.eventAggregator.publish(Context1.key, {
+      foo: \\"bar\\",
+
+      content() {
+        return this.content;
+      },
+    });
+    this.eventAggregator.publish(Context2.key, {
+      bar: \\"baz\\",
+    });
+  }
 }
 "
 `;
@@ -1863,6 +1995,43 @@ export class RenderContent {
 "
 `;
 
+exports[`Aurelia > jsx > Typescript Test > multipleOnUpdateWithDeps 1`] = `
+"import { customElement, computedFrom, inlineView } from \\"aurelia-framework\\";
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <div></div>
+    \\\\\${propertyObserver}
+  </template>
+\`)
+export class MultipleOnUpdateWithDeps {
+  a = \\"a\\";
+  b = \\"b\\";
+  c = \\"c\\";
+  d = \\"d\\";
+
+  @computedFrom(\\"a\\", \\"b\\", \\"c\\", \\"d\\")
+  get propertyObserver() {
+    console.log(\\"Runs when this.a or this.b changes\\", this.a, this.b);
+
+    if (this.a === \\"a\\") {
+      this.a = \\"b\\";
+    }
+    console.log(\\"Runs when this.c or this.d changes\\", this.c, this.d);
+
+    if (this.a === \\"a\\") {
+      this.a = \\"b\\";
+    }
+
+    return;
+  }
+}
+"
+`;
+
 exports[`Aurelia > jsx > Typescript Test > multipleSpreads 1`] = `
 "import { customElement, inlineView } from \\"aurelia-framework\\";
 
@@ -1881,6 +2050,39 @@ export class MyBasicComponent {
   attrs = {
     hello: \\"world\\",
   };
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > nestedShow 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+interface Props {
+  conditionA: boolean;
+  conditionB: boolean;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <template if.bind=\\"conditionA\\">
+      <template if.bind=\\"!conditionB\\">
+        <div>if condition A and condition B</div>
+      </template>
+      <template else>
+        <div>else-condition-B</div>
+      </template>
+    </template>
+    <template else>
+      <div>else-condition-A</div>
+    </template>
+  </template>
+\`)
+export class NestedShow {
+  @bindable() conditionA: Props[\\"conditionA\\"];
+  @bindable() conditionB: Props[\\"conditionB\\"];
 }
 "
 `;
@@ -2215,7 +2417,7 @@ export class OnUpdate {
     };
   };
 
-  @computedFrom()
+  @computedFrom(\\"foo\\", \\"bar\\", \\"zoo\\")
   get propertyObserver() {
     this.foo({
       someOption: this.bar,
@@ -2348,6 +2550,32 @@ export class Button {
 "
 `;
 
+exports[`Aurelia > jsx > Typescript Test > rootShow 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+export interface RenderStylesProps {
+  foo: string;
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <template if.bind=\\"foo === 'bar'\\">
+      <div>Bar</div>
+    </template>
+    <template else>
+      <div>Foo</div>
+    </template>
+  </template>
+\`)
+export class RenderStyles {
+  @bindable() foo: RenderStylesProps[\\"foo\\"];
+}
+"
+`;
+
 exports[`Aurelia > jsx > Typescript Test > self-referencing component 1`] = `
 "import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
 
@@ -2394,6 +2622,36 @@ exports[`Aurelia > jsx > Typescript Test > self-referencing component with child
 \`)
 export class MyComponent {
   @bindable() name: any;
+}
+"
+`;
+
+exports[`Aurelia > jsx > Typescript Test > showWithFor 1`] = `
+"import { bindable, customElement, inlineView } from \\"aurelia-framework\\";
+
+interface Props {
+  conditionA: boolean;
+  items: string[];
+}
+
+@customElement(\\"my-component\\")
+@inlineView(\`
+  <template>
+    test
+
+    <template if.bind=\\"conditionA\\">
+      <template repeat.for=\\"item of items\\">
+        <div key.bind=\\"$index\\">\\\\\${item}</div>
+      </template>
+    </template>
+    <template else>
+      <div>else-condition-A</div>
+    </template>
+  </template>
+\`)
+export class NestedShow {
+  @bindable() conditionA: Props[\\"conditionA\\"];
+  @bindable() items: Props[\\"items\\"];
 }
 "
 `;
@@ -2929,7 +3187,7 @@ export class MyComponent {
     this.result = a_ * b_;
   };
 
-  @computedFrom(\\"a\\", \\"b\\")
+  @computedFrom(\\"a\\", \\"b\\", \\"result\\", \\"calculateResult\\")
   get propertyObserver() {
     this.calculateResult(this.a, this.b);
 

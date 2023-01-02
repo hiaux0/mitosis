@@ -993,24 +993,39 @@ export const componentToAurelia: TranspilerGenerator<ToAureliaOptions> =
     /**
      * Aurelia does not have a hook, that updates on change of _any_ property.
      */
-    const deps = json.hooks.onUpdate?.reduce((prev, curr) => {
+    let deps = json.hooks.onUpdate?.reduce((prev, curr) => {
       if (curr.rawDeps) {
         prev.push(...curr.rawDeps);
       }
+
+      /** [state.a, state.b] */
+      const depsOfHooks = curr.deps;
+      /** state.a, state.b */
+      const convertedDeps = removeSurroundingArray(depsOfHooks);
+      /** a, b  */
+      const onlyVars = stripStateAndPropsRefs(convertedDeps);
+      if (onlyVars === '') return prev;
+
+      const split = onlyVars.split(',');
+      const trimmed = split.map((splitVar) => splitVar.trim());
+      prev.push(...trimmed);
+
       return prev;
     }, [] as string[]);
+    deps = Array.from(new Set([...(deps ?? []), ...stateVars]));
     const withQuotes = deps?.map((dep) => `"${dep}"`);
     const computedFromArgs = withQuotes?.join(', ');
 
     const onUpdateCode = !json.hooks.onUpdate?.length
       ? ''
       : `@computedFrom(${computedFromArgs})\n  get propertyObserver() {
-               ${json.hooks.onUpdate.reduce((code, hook) => {
-                 code += hook.code;
-                 return code + '\n';
-               }, '')}
-               return
-             }`;
+          ${json.hooks.onUpdate.reduce((code, hook) => {
+            code += hook.code;
+            return code + '\n';
+          }, '')}
+          return
+        }
+        ${DEBUG ? '// --[[propertyObserver]]--' : ''}`;
 
     // Step: inlineView
     str += dedent`
@@ -1315,4 +1330,21 @@ function setContextCode({ json, options }: { json: MitosisComponent; options: To
 function isAureliaV1(options: Pick<ToAureliaOptions, 'aureliaVersion'>) {
   const is = options.aureliaVersion === AureliaV1;
   return is;
+}
+
+/**
+ * Remove the surrounding block for a function, for instance
+ *
+ * `[ const foo = "bar" ]` -> `const foo = "bar"`
+ */
+function removeSurroundingArray(code: string | undefined) {
+  if (!code) return;
+
+  let str = code;
+
+  const sqarueBracketsRegex = /^\s*\[([\s\S]+)\]\s*$/;
+  if (sqarueBracketsRegex.test(str)) {
+    return str.replace(sqarueBracketsRegex, '$1');
+  }
+  return str;
 }

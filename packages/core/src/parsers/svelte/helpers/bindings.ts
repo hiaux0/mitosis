@@ -22,6 +22,9 @@ function replaceGroupWithChecked(node: MitosisNode, isArray = false) {
     node.bindings['checked'] = {
       code,
     };
+    if (node.bindings.group.rawCode) {
+      node.bindings['checked'].rawCode = node.bindings.group.rawCode;
+    }
     delete node.bindings.group;
   }
 }

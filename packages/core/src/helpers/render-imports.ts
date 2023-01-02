@@ -38,6 +38,7 @@ const getFileExtensionForTarget = (target: Target): string => {
     case 'lit':
       return '.js';
     case 'angular':
+    case 'aurelia':
       return '';
     // these `.lite` extensions are handled in the `transpile` step of the CLI.
     // TO-DO: consolidate file-extension renaming to this file, and remove `.lite` replaces from the CLI `transpile`. (outdated) ?
@@ -95,7 +96,7 @@ const getImportedValues = ({ theImport }: { theImport: MitosisImport }): ImportV
   return { starImport, defaultImport, namedImports };
 };
 
-const getImportValue = ({ defaultImport, namedImports, starImport }: ImportValues) => {
+export const getImportValue = ({ defaultImport, namedImports, starImport }: ImportValues) => {
   if (starImport) {
     return ` * as ${starImport} `;
   } else {
@@ -143,7 +144,7 @@ export const renderImport = ({
     } else {
       return `const ${importValue} = () => import('${path}')
       .then(x => x.default)
-      .catch(err => { 
+      .catch(err => {
         console.error('Error while attempting to dynamically import component ${importValue} at ${path}', err);
         throw err;
       });`;
@@ -151,7 +152,7 @@ export const renderImport = ({
   }
 
   if (importMapper) {
-    return importMapper(component, theImport, importedValues, componentsUsed);
+    return importMapper(component, theImport, importedValues, componentsUsed, path);
   }
 
   return importValue ? `import ${importValue} from '${path}';` : `import '${path}';`;

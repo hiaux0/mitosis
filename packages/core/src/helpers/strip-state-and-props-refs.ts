@@ -124,7 +124,9 @@ export const stripStateAndPropsRefs = (
     }
   }
   if (includeState !== false) {
+    // newCode; /*?*/
     newCode = replaceIdentifiers({ code: newCode, from: 'state', to: replaceWith || null });
+    // newCode; /*?*/
   }
 
   return newCode;

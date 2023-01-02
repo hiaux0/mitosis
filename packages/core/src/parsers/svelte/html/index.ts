@@ -13,6 +13,8 @@ import type { Ast, TemplateNode } from 'svelte/types/compiler/interfaces';
 import type { SveltosisComponent } from '../types';
 
 export function parseHtml(ast: Ast, json: SveltosisComponent) {
+  // ast.html.children[1].children[3].attributes[1]; /*?*/
+
   // todo: should filter children and check if just 1 has length
   const html =
     ast.html.children?.length === 2 && ast.html.children[0].raw?.trim().length === 0

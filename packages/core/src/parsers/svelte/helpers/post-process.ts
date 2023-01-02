@@ -95,6 +95,7 @@ function addPropertiesAndStateToNode(json: SveltosisComponent, node: MitosisNode
     if (Object.prototype.hasOwnProperty.call(node.bindings, key)) {
       node.bindings[key] = {
         code: addPropertiesAndState(json, node.bindings[key]?.code ?? '').trim(),
+        rawCode: node.bindings[key]?.code?.trim() ?? '',
         arguments: node.bindings[key]?.arguments,
         type: node.bindings[key]?.type,
       };
@@ -122,7 +123,9 @@ function postProcessState(json: SveltosisComponent) {
 function postProcessChildren(json: SveltosisComponent, children: MitosisNode[]) {
   for (const node of children) {
     addPropertiesAndStateToNode(json, node);
+    // json; /*?*/
     processBindings(json, node);
+    // json; /*?*/
 
     let children: MitosisNode[] = [];
 
@@ -146,6 +149,7 @@ function postProcessChildren(json: SveltosisComponent, children: MitosisNode[]) 
 
 function addPropertiesAndStateToHook(json: SveltosisComponent, hook: extendedHook): extendedHook {
   return {
+    ...hook,
     code: addPropertiesAndState(json, hook.code),
     deps: addPropertiesAndState(json, hook.deps || ''),
   };
@@ -182,9 +186,11 @@ export function postProcess(json: SveltosisComponent) {
   // Call preventNameCollissions here, before the rest (where it applies -- function arguments for now)
   // State (everything except type === 'property')
   postProcessState(json);
+  // json; /*?*/
 
   // Children
   postProcessChildren(json, json.children);
+  // json; /*?*/
 
   // Hooks
   postProcessHooks(json);

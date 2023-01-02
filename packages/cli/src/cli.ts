@@ -37,6 +37,7 @@ OPTIONS
 		- svelte
 		- liquid
 		- angular
+		- aurelia
 	--from=<format>, -f=<format>
 		Specify input format. <format> can be one of:
 		

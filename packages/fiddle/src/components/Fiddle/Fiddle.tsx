@@ -972,6 +972,7 @@ export default function Fiddle() {
                 />
                 <Tab label={<TabLabelWithIcon label="Qwik" />} value="qwik" />
                 <Tab label={<TabLabelWithIcon label="Angular" />} value="angular" />
+                <Tab label={<TabLabelWithIcon label="Aurelia" />} value="aurelia" />
                 {state.inputTab !== 'svelte' && (
                   <Tab label={<TabLabelWithIcon label="Svelte" />} value="svelte" />
                 )}
@@ -1426,6 +1427,7 @@ export default function Fiddle() {
                         state.outputTab === 'mitosis' ||
                         state.outputTab === 'template' ||
                         state.outputTab === 'angular' ||
+                        state.outputTab === 'aurelia' ||
                         state.outputTab === 'webcomponents' ||
                         state.outputTab === 'qwik' ||
                         state.outputTab === 'stencil' ||
@@ -1500,11 +1502,11 @@ export default function Fiddle() {
           </div>
           <style>
             {`
-              builder-editor { 
-                flex-grow: 1; 
-                pointer-events: ${state.isDraggingBuilderCodeBar ? 'none' : 'auto'}; 
+              builder-editor {
+                flex-grow: 1;
+                pointer-events: ${state.isDraggingBuilderCodeBar ? 'none' : 'auto'};
               }
-              
+
               builder-editor iframe {
                 min-width: unset
               }

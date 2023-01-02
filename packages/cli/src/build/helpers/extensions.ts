@@ -12,6 +12,7 @@ export const getFileExtensionForTarget = ({
   const isTs = !!options.options[target]?.typescript;
   switch (target) {
     case 'angular':
+    case 'aurelia':
       return '.ts';
     case 'alpine':
     case 'html':

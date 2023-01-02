@@ -136,7 +136,7 @@ const mappers: {
           return value.code;
         }
       })
-      .join('\n')}${renderedChildren}</slot>`;
+      .join('\n')}${renderedChildren}</slot>`.concat(`${DEBUG ? '\n --[[slot]]--' : ''}`);
   },
 };
 
@@ -178,7 +178,12 @@ export const blockToAurelia = (
     let result = '';
     if (isSlotProperty(textCode)) {
       const selector = pipe(textCode, stripSlotPrefix, kebabCase);
-      return `<slot select="[${selector}]"></slot>`;
+      result = '';
+      result += `<slot name="${selector}"></slot>`;
+      if (DEBUG) {
+        result += '--[[slot]]--';
+      }
+      return result;
     }
 
     if (blockOptions.indexNameTracker?.includes(textCode)) {
